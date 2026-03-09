@@ -1,51 +1,41 @@
 import NextAuth from "next-auth";
-import GitHub from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { authConfig } from "@/lib/auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  providers: [
-    GitHub({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
-      authorization: {
-        params: {
-          scope: "read:user read:org user:email",
-        },
-      },
-    }),
-  ],
+  session: { strategy: "jwt" },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-      }
-      return session;
-    },
-    async signIn({ user, account, profile }) {
+    ...authConfig.callbacks,
+    async jwt({ token, account, profile }) {
+      // On first sign-in, account and profile are available — update DB with GitHub data
       if (account?.provider === "github" && profile) {
-        // Store GitHub-specific data on first sign-in
         const githubProfile = profile as unknown as {
           id: number;
           login: string;
           avatar_url: string;
         };
-        await prisma.user.update({
-          where: { id: user.id as string },
-          data: {
-            githubId: String(githubProfile.id),
-            username: githubProfile.login,
-            avatarUrl: githubProfile.avatar_url,
-          },
-        }).catch(() => {
-          // User might not exist yet on first creation — handled by adapter
-        });
+        if (token.sub) {
+          await prisma.user.update({
+            where: { id: token.sub },
+            data: {
+              githubId: String(githubProfile.id),
+              username: githubProfile.login,
+              avatarUrl: githubProfile.avatar_url,
+            },
+          }).catch(() => {});
+        }
+        token.username = githubProfile.login;
       }
-      return true;
+      return token;
     },
-  },
-  pages: {
-    signIn: "/login",
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
   },
 });
