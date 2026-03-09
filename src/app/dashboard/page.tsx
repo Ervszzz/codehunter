@@ -1,5 +1,6 @@
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { calcLevel, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
 import { redirect } from "next/navigation";
 import { Rank, XPEventType } from "@prisma/client";
@@ -51,6 +52,15 @@ export default async function DashboardPage() {
         </span>
 
         <div className="flex items-center gap-4">
+          {user.rank === "NATIONAL" && (
+            <Link
+              href="/prestige"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all animate-glow-pulse"
+              style={{ color: "#7c4dff", border: "1px solid rgba(124,77,255,0.4)", background: "rgba(124,77,255,0.08)" }}
+            >
+              ★ Prestige
+            </Link>
+          )}
           <SyncButton />
           <form
             action={async () => {
