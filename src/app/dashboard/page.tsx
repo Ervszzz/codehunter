@@ -121,14 +121,23 @@ export default async function DashboardPage() {
               <h2 className="text-2xl font-display font-bold text-white truncate">
                 {user.name ?? user.username}
               </h2>
-              {user.prestigeTier > 0 && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                  style={{ background: "rgba(255,213,79,0.15)", border: "1px solid rgba(255,213,79,0.4)", color: "#ffd54f" }}
-                >
-                  ★ Prestige {toRoman(user.prestigeTier)}
-                </span>
-              )}
+              {user.prestigeTier > 0 && (() => {
+                const ps = getPrestigeStyle(user.prestigeTier);
+                return (
+                  <span
+                    className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
+                    style={{
+                      background: ps.bg,
+                      border: `1px solid ${ps.border}`,
+                      color: ps.color,
+                      boxShadow: `0 0 12px ${ps.glow}`,
+                      textShadow: `0 0 8px ${ps.glow}`,
+                    }}
+                  >
+                    {ps.label} Prestige {toRoman(user.prestigeTier)}
+                  </span>
+                );
+              })()}
             </div>
             <p className="text-slate-400 text-sm mb-3">@{user.username}</p>
             <div className="flex flex-wrap items-center gap-3">
@@ -141,9 +150,26 @@ export default async function DashboardPage() {
               <span className="text-slate-400 text-sm">
                 Level <span className="text-white font-bold">{user.level}</span>
               </span>
-              {prestigeTitle && (
-                <span className="text-xs text-slate-500 italic">&quot;{prestigeTitle}&quot;</span>
-              )}
+              {prestigeTitle && (() => {
+                const ps = getPrestigeStyle(user.prestigeTier);
+                return (
+                  <span
+                    className="text-sm font-display font-bold px-3 py-1 rounded-full"
+                    style={{
+                      background: ps.bg,
+                      border: `1px solid ${ps.border}`,
+                      color: ps.color,
+                      boxShadow: `0 0 14px ${ps.glow}`,
+                      textShadow: `0 0 10px ${ps.glow}`,
+                    }}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline", marginRight: 5, verticalAlign: "middle", opacity: 0.85 }}>
+                      <path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z"/>
+                    </svg>
+                    &ldquo;{prestigeTitle}&rdquo;
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
@@ -295,6 +321,17 @@ export default async function DashboardPage() {
 }
 
 // ── constants & helpers ───────────────────────────────────────────────────────
+
+// Per-tier prestige styling — each tier has a distinct color identity
+const PRESTIGE_STYLES: Record<number, { color: string; glow: string; bg: string; border: string; label: string }> = {
+  1: { color: "#fbbf24", glow: "rgba(251,191,36,0.4)",  bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.5)",  label: "★" },
+  2: { color: "#a78bfa", glow: "rgba(167,139,250,0.4)", bg: "rgba(124,77,255,0.12)", border: "rgba(124,77,255,0.5)",  label: "◆" },
+  3: { color: "#38bdf8", glow: "rgba(56,189,248,0.4)",  bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.5)",  label: "❄" },
+  4: { color: "#f87171", glow: "rgba(248,113,113,0.4)", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.5)", label: "👑" },
+};
+function getPrestigeStyle(tier: number) {
+  return PRESTIGE_STYLES[Math.min(tier, 4)] ?? PRESTIGE_STYLES[4];
+}
 
 const RANK_STYLES: Record<Rank, { bg: string; border: string; color: string }> = {
   E: { bg: "rgba(30,41,59,0.6)", border: "#94a3b8", color: "#94a3b8" },
