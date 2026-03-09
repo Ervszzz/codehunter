@@ -48,14 +48,47 @@ body {
 .animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
 
 .void-btn {
-  background: rgba(124,77,255,0.1);
-  border: 1px solid rgba(124,77,255,0.5);
-  box-shadow: 0 0 30px rgba(124,77,255,0.2), inset 0 0 20px rgba(124,77,255,0.05);
-  transition: box-shadow 0.3s, border-color 0.3s;
+  background: linear-gradient(135deg, rgba(124,77,255,0.15), rgba(79,195,247,0.05));
+  border: 1px solid rgba(124,77,255,0.6);
+  box-shadow: 0 0 40px rgba(124,77,255,0.3), 0 0 80px rgba(124,77,255,0.1), inset 0 0 30px rgba(124,77,255,0.08);
+  transition: all 0.4s ease;
+  animation: void-pulse 2.5s ease-in-out infinite;
 }
 .void-btn:hover {
-  border-color: rgba(124,77,255,0.9);
-  box-shadow: 0 0 60px rgba(124,77,255,0.4), inset 0 0 30px rgba(124,77,255,0.1);
+  border-color: rgba(124,77,255,1);
+  box-shadow: 0 0 80px rgba(124,77,255,0.6), 0 0 120px rgba(124,77,255,0.2), inset 0 0 40px rgba(124,77,255,0.15);
+  transform: scale(1.03);
+}
+
+@keyframes void-pulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(124,77,255,0.3), 0 0 80px rgba(124,77,255,0.1), inset 0 0 30px rgba(124,77,255,0.08); }
+  50% { box-shadow: 0 0 60px rgba(124,77,255,0.5), 0 0 120px rgba(124,77,255,0.2), inset 0 0 40px rgba(124,77,255,0.12); }
+}
+
+@keyframes prestige-reveal {
+  0% { opacity: 0; transform: scale(0.6); filter: blur(20px); }
+  60% { opacity: 1; transform: scale(1.08); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes crack-in {
+  0% { opacity: 0; transform: scaleX(0); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+.animate-prestige-reveal { animation: prestige-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.shimmer-text {
+  background: linear-gradient(90deg, #ffd54f 0%, #fff8e1 40%, #ffd54f 60%, #ff9800 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
 }
 
 .gate-btn {

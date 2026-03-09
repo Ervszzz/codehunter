@@ -20,7 +20,7 @@ export const RANK_THRESHOLDS: Record<Rank, number> = {
   B: 20000,
   A: 50000,
   S: 120000,
-  NATIONAL: 300000,
+  NATIONAL: 100, // TEMP: lowered for testing
 };
 
 export const RANK_TITLES: Record<Rank, string> = {
