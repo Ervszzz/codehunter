@@ -1,7 +1,7 @@
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { calcLevel, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
+import { calcLevel, calcRank, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
 import { redirect } from "next/navigation";
 import { Rank, XPEventType } from "@prisma/client";
 import SyncButton from "./SyncButton";
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
         </span>
 
         <div className="flex items-center gap-4">
-          {user.rank === "NATIONAL" && (
+          {calcRank(user.totalXP) === "NATIONAL" && (
             <Link
               href="/prestige"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all animate-glow-pulse"
