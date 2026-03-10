@@ -155,6 +155,13 @@ body {
   transform: translateY(-2px);
 }
 
+.activity-row {
+  transition: background 0.15s ease;
+}
+.activity-row:hover {
+  background: rgba(79,195,247,0.06) !important;
+}
+
 .xp-bar-shimmer {
   background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 40%, transparent 100%);
   background-size: 200% auto;
