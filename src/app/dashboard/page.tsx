@@ -120,12 +120,12 @@ export default async function DashboardPage() {
       <div className="relative max-w-6xl mx-auto px-6 py-8 space-y-6" style={{ zIndex: 1 }}>
 
         {/* ── Hunter Card ── */}
-        {/* Gradient border wrapper */}
+        {/* Gradient border wrapper — static glow, no pulse */}
         <div
-          className="rounded-2xl p-px animate-border-glow"
+          className="rounded-2xl p-px"
           style={{
-            background: `linear-gradient(135deg, ${rankStyle.border}90 0%, ${rankStyle.border}20 40%, transparent 60%, ${rankStyle.border}50 100%)`,
-            boxShadow: `0 0 80px ${rankStyle.border}18, 0 0 160px ${rankStyle.border}08`,
+            background: `linear-gradient(135deg, ${rankStyle.border}ff 0%, ${rankStyle.border}60 30%, ${rankStyle.border}20 60%, ${rankStyle.border}80 100%)`,
+            boxShadow: `0 0 0 1px ${rankStyle.border}30, 0 0 30px ${rankStyle.border}40, 0 0 80px ${rankStyle.border}20, 0 0 160px ${rankStyle.border}10`,
           }}
         >
           <div
@@ -135,10 +135,10 @@ export default async function DashboardPage() {
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <div
-                className="rounded-full p-px animate-border-glow"
+                className="rounded-full p-px"
                 style={{
-                  background: `linear-gradient(135deg, ${rankStyle.border}, ${rankStyle.border}40, ${rankStyle.border}90)`,
-                  boxShadow: `0 0 20px ${rankStyle.border}50`,
+                  background: `linear-gradient(135deg, ${rankStyle.border}ff, ${rankStyle.border}60, ${rankStyle.border}ff)`,
+                  boxShadow: `0 0 0 1px ${rankStyle.border}40, 0 0 16px ${rankStyle.border}70, 0 0 32px ${rankStyle.border}40`,
                 }}
               >
                 {user.avatarUrl ? (
@@ -147,9 +147,6 @@ export default async function DashboardPage() {
                     src={user.avatarUrl}
                     alt={user.username ?? "avatar"}
                     className="w-20 h-20 rounded-full object-cover block"
-                    style={{
-                      boxShadow: `0 0 24px ${rankStyle.border}50, 0 0 48px ${rankStyle.border}20`,
-                    }}
                   />
                 ) : (
                   <div
@@ -162,12 +159,12 @@ export default async function DashboardPage() {
               </div>
               {/* Rank badge */}
               <span
-                className="absolute -bottom-1 -right-1 text-xs font-display font-bold px-2 py-0.5 rounded-full animate-border-glow"
+                className="absolute -bottom-1 -right-1 text-xs font-display font-bold px-2 py-0.5 rounded-full"
                 style={{
                   background: rankStyle.bg,
-                  border: `1px solid ${rankStyle.border}`,
+                  border: `1px solid ${rankStyle.border}cc`,
                   color: rankStyle.color,
-                  boxShadow: `0 0 10px ${rankStyle.border}60`,
+                  boxShadow: `0 0 12px ${rankStyle.border}80, 0 0 4px ${rankStyle.border}ff`,
                   textShadow: `0 0 8px ${rankStyle.border}`,
                 }}
               >
@@ -186,7 +183,7 @@ export default async function DashboardPage() {
                 </h2>
                 {user.username === OWNER_USERNAME && (
                   <span
-                    className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider animate-border-glow"
+                    className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
                     style={{
                       background: OWNER_STYLE.bg,
                       border: `1px solid ${OWNER_STYLE.border}`,
