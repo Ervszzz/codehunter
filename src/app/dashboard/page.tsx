@@ -308,11 +308,9 @@ export default async function DashboardPage() {
                 {user.totalXP.toLocaleString()}
               </div>
               <div className="text-xs text-slate-500 tracking-widest uppercase mt-0.5">Total XP</div>
-              {user.lastSyncedAt && (
-                <div className="text-xs mt-1" style={{ color: `${rankStyle.border}60` }}>
-                  ⟳ {timeAgo(user.lastSyncedAt)}
-                </div>
-              )}
+              <div className="text-xs mt-1 text-slate-500">
+                Last synced: {user.lastSyncedAt ? timeAgo(user.lastSyncedAt) : "Never"}
+              </div>
             </div>
           </div>
         </div>

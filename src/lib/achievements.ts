@@ -182,3 +182,10 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
 export const ACHIEVEMENT_MAP: Record<string, AchievementDef> = Object.fromEntries(
   ACHIEVEMENT_DEFS.map((a) => [a.key, a])
 );
+
+/** Returns the display name and icon for a given achievement key, or null if not found. */
+export function getAchievementInfo(key: string): { name: string; icon: string } | null {
+  const def = ACHIEVEMENT_MAP[key];
+  if (!def) return null;
+  return { name: def.name, icon: def.icon };
+}

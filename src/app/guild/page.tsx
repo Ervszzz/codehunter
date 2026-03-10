@@ -56,7 +56,14 @@ export default async function GuildPage() {
         >
           CODE<span className="text-white">HUNTER</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/guild/leaderboard"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all"
+            style={{ color: "#94a3b8", border: "1px solid rgba(148,163,184,0.2)", background: "rgba(148,163,184,0.04)" }}
+          >
+            Guild Rankings →
+          </Link>
           <Link
             href="/dashboard"
             className="text-xs font-semibold px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all"

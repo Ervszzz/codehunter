@@ -11,6 +11,10 @@ interface SyncResult {
   xpGained: number;
   newLevel: number;
   newRank: string;
+  levelUp: boolean;
+  rankUp: boolean;
+  newAchievements: string[]; // achievement keys
+  lastSyncedAt: string;
   error?: string;
 }
 
@@ -18,10 +22,13 @@ export async function syncUserXP(userId?: string): Promise<SyncResult> {
   const session = await auth();
   const targetId = userId ?? session?.user?.id;
 
-  if (!targetId) return { success: false, xpGained: 0, newLevel: 1, newRank: "E", error: "Not authenticated" };
+  if (!targetId) return { success: false, xpGained: 0, newLevel: 1, newRank: "E", levelUp: false, rankUp: false, newAchievements: [], lastSyncedAt: new Date().toISOString(), error: "Not authenticated" };
 
   const user = await prisma.user.findUnique({ where: { id: targetId } });
-  if (!user?.username) return { success: false, xpGained: 0, newLevel: 1, newRank: "E", error: "User not found" };
+  if (!user?.username) return { success: false, xpGained: 0, newLevel: 1, newRank: "E", levelUp: false, rankUp: false, newAchievements: [], lastSyncedAt: new Date().toISOString(), error: "User not found" };
+
+  const oldLevel = user.level;
+  const oldRank = user.rank;
 
   // Fetch GitHub access token
   const account = await prisma.account.findFirst({
@@ -152,12 +159,15 @@ export async function syncUserXP(userId?: string): Promise<SyncResult> {
     });
 
     // Check and award any newly unlocked achievements
-    await checkAndAwardAchievements(targetId);
+    const newAchievements = await checkAndAwardAchievements(targetId);
 
-    return { success: true, xpGained, newLevel, newRank };
+    const levelUp = newLevel > oldLevel;
+    const rankUp = newRank !== oldRank;
+
+    return { success: true, xpGained, newLevel, newRank, levelUp, rankUp, newAchievements, lastSyncedAt: new Date().toISOString() };
   } catch (err) {
     console.error("XP sync error:", err);
-    return { success: false, xpGained: 0, newLevel: user.level, newRank: user.rank, error: String(err) };
+    return { success: false, xpGained: 0, newLevel: user.level, newRank: user.rank, levelUp: false, rankUp: false, newAchievements: [], lastSyncedAt: new Date().toISOString(), error: String(err) };
   }
 }
 

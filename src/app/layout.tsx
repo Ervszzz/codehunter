@@ -17,6 +17,7 @@ const rajdhani = Rajdhani({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://codehunter.vercel.app"),
   title: "CodeHunter",
   description: "Turn your GitHub activity into XP, levels, and ranks. Your code is your power.",
   manifest: "/manifest.json",
