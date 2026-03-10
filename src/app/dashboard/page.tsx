@@ -4,10 +4,21 @@ import Link from "next/link";
 import { calcLevel, calcRank, Rank, XPEventType, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
 import { redirect } from "next/navigation";
 import SyncButton from "./SyncButton";
+import { syncUserXP } from "@/actions/syncXP";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+
+  // Auto-sync on login / page load if never synced or last sync >1h ago
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const quick = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { lastSyncedAt: true },
+  });
+  if (!quick?.lastSyncedAt || quick.lastSyncedAt < oneHourAgo) {
+    await syncUserXP(session.user.id);
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -120,6 +131,20 @@ export default async function DashboardPage() {
               <h2 className="text-2xl font-display font-bold text-white truncate">
                 {user.name ?? user.username}
               </h2>
+              {user.username === OWNER_USERNAME && (
+                <span
+                  className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
+                  style={{
+                    background: OWNER_STYLE.bg,
+                    border: `1px solid ${OWNER_STYLE.border}`,
+                    color: OWNER_STYLE.color,
+                    boxShadow: `0 0 14px ${OWNER_STYLE.glow}`,
+                    textShadow: `0 0 10px ${OWNER_STYLE.glow}`,
+                  }}
+                >
+                  {OWNER_STYLE.label}
+                </span>
+              )}
               {user.prestigeTier > 0 && (() => {
                 const ps = getPrestigeStyle(user.prestigeTier);
                 return (
@@ -320,6 +345,16 @@ export default async function DashboardPage() {
 }
 
 // ── constants & helpers ───────────────────────────────────────────────────────
+
+const OWNER_USERNAME = "Ervszzz";
+
+const OWNER_STYLE = {
+  label: "⚔ The Architect",
+  color: "#ff4444",
+  glow: "rgba(255,68,68,0.5)",
+  bg: "rgba(255,68,68,0.08)",
+  border: "rgba(255,68,68,0.45)",
+};
 
 // Per-tier prestige styling — each tier has a distinct color identity
 const PRESTIGE_STYLES: Record<number, { color: string; glow: string; bg: string; border: string; label: string }> = {
