@@ -10,9 +10,16 @@ export async function middleware(request: NextRequest) {
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
   const isLogin = pathname === "/login";
 
+  const secure = request.url.startsWith("https");
+  // NextAuth v5 changed cookie name from "next-auth" to "authjs"
+  const cookieName = secure
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
+    cookieName,
   });
 
   if (isProtected && !token) {
