@@ -338,7 +338,7 @@ export default async function DashboardPage() {
         <BoostBanner />
 
         {/* ── Architect modal (floating button, owner only) ── */}
-        {isOwner && <ArchitectModal activeBoost={activeBoost} />}
+        {isOwner && <ArchitectModal activeBoost={activeBoost ? { ...activeBoost, expiresAt: activeBoost.expiresAt.toISOString() } : null} />}
 
         {/* ── Stats grid ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

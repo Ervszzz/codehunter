@@ -8,7 +8,7 @@ interface Boost {
   id: string;
   label: string;
   multiplier: number;
-  expiresAt: Date;
+  expiresAt: string; // ISO string — Dates aren't serializable across server→client boundary
 }
 
 const MULTIPLIER_PRESETS = [1.5, 2, 3, 5];
@@ -36,13 +36,14 @@ export default function ArchitectModal({ activeBoost }: { activeBoost: Boost | n
   const [tab, setTab] = useState<"boost">("boost");
   const [isPending, startTransition] = useTransition();
 
-  // Boost form state
-  const [multiplierInput, setMultiplierInput] = useState("2");
+  // Boost form state — preset and custom are tracked separately to avoid conflicts
+  const [selectedPreset, setSelectedPreset] = useState<number | null>(2);
+  const [customInput, setCustomInput] = useState("");
   const [durationMs, setDurationMs] = useState(DURATION_OPTS[0].ms);
   const [label, setLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const multiplier = parseFloat(multiplierInput) || 0;
+  const multiplier = selectedPreset ?? (parseFloat(customInput) || 0);
   const multiplierValid = multiplier >= 1.1 && multiplier <= 50;
 
   function handleCreate() {
@@ -52,6 +53,7 @@ export default function ArchitectModal({ activeBoost }: { activeBoost: Boost | n
     fd.set("label", label.trim() || `${multiplier}× XP Event`);
     fd.set("multiplier", String(multiplier));
     fd.set("durationMs", String(durationMs));
+    setCustomInput("");
     startTransition(async () => {
       try {
         await createBoost(fd);
@@ -192,19 +194,19 @@ export default function ArchitectModal({ activeBoost }: { activeBoost: Boost | n
                     {MULTIPLIER_PRESETS.map(v => (
                       <button
                         key={v}
-                        onClick={() => setMultiplierInput(String(v))}
+                        onClick={() => { setSelectedPreset(v); setCustomInput(""); }}
                         className="px-4 py-1.5 rounded-lg text-sm font-bold transition-all"
                         style={{
-                          background: multiplierInput === String(v) ? "rgba(255,68,68,0.2)" : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${multiplierInput === String(v) ? "rgba(255,68,68,0.6)" : "rgba(255,255,255,0.08)"}`,
-                          color: multiplierInput === String(v) ? "#ff4444" : "#64748b",
-                          boxShadow: multiplierInput === String(v) ? "0 0 12px rgba(255,68,68,0.2)" : "none",
+                          background: selectedPreset === v ? "rgba(255,68,68,0.2)" : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${selectedPreset === v ? "rgba(255,68,68,0.6)" : "rgba(255,255,255,0.08)"}`,
+                          color: selectedPreset === v ? "#ff4444" : "#64748b",
+                          boxShadow: selectedPreset === v ? "0 0 12px rgba(255,68,68,0.2)" : "none",
                         }}
                       >
                         {v}×
                       </button>
                     ))}
-                    {/* Custom input */}
+                    {/* Custom input — completely independent from preset state */}
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
@@ -212,12 +214,12 @@ export default function ArchitectModal({ activeBoost }: { activeBoost: Boost | n
                         max="50"
                         step="0.1"
                         placeholder="Custom"
-                        value={MULTIPLIER_PRESETS.includes(parseFloat(multiplierInput)) ? "" : multiplierInput}
-                        onChange={e => setMultiplierInput(e.target.value)}
+                        value={customInput}
+                        onChange={e => { setCustomInput(e.target.value); setSelectedPreset(null); }}
                         className="w-20 px-2 py-1.5 rounded-lg text-sm text-white text-center outline-none"
                         style={{
                           background: "rgba(255,255,255,0.04)",
-                          border: `1px solid ${!MULTIPLIER_PRESETS.includes(parseFloat(multiplierInput)) && multiplierInput ? "rgba(255,68,68,0.5)" : "rgba(255,255,255,0.08)"}`,
+                          border: `1px solid ${selectedPreset === null && customInput ? "rgba(255,68,68,0.5)" : "rgba(255,255,255,0.08)"}`,
                         }}
                       />
                       <span className="text-slate-500 text-sm">×</span>
@@ -259,7 +261,7 @@ export default function ArchitectModal({ activeBoost }: { activeBoost: Boost | n
                     boxShadow: "0 0 24px rgba(255,68,68,0.12)",
                   }}
                 >
-                  {isPending ? "Activating..." : `⚡ Activate ${multiplierValid ? multiplier : "?"}× XP — ${durationLabel}`}
+                  {isPending ? "Activating..." : `⚡ Activate ${multiplierValid ? multiplier + "×" : "?×"} XP — ${durationLabel}`}
                 </button>
 
                 <p className="text-xs text-slate-600 text-center">
