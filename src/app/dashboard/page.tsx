@@ -5,6 +5,7 @@ import { calcLevel, calcRank, Rank, XPEventType, RANK_TITLES, xpToNextRank, RANK
 import { redirect } from "next/navigation";
 import SyncButton from "./SyncButton";
 import AutoSync from "./AutoSync";
+import Particles from "./Particles";
 import SignOutButton from "./SignOutButton";
 
 export default async function DashboardPage() {
@@ -41,40 +42,37 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#050810", color: "#e2e8f0" }}>
 
-      {/* ── Ambient background effects ── */}
+      {/* ── Particle background ── */}
+      <Particles count={70} />
+
+      {/* ── Ambient glow orbs (static, behind particles) ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        {/* Large rank-colored orb behind hunter card */}
         <div
           className="absolute animate-orb-drift"
           style={{
-            top: "10%", left: "30%", width: 600, height: 300,
+            top: "5%", left: "25%", width: 700, height: 350,
             borderRadius: "50%",
-            background: `radial-gradient(ellipse, ${rankStyle.border}18 0%, transparent 70%)`,
-            filter: "blur(40px)",
+            background: `radial-gradient(ellipse, ${rankStyle.border}12 0%, transparent 70%)`,
+            filter: "blur(60px)",
           }}
         />
-        {/* Magic purple orb */}
         <div
           className="absolute animate-orb-drift"
           style={{
-            top: "50%", right: "10%", width: 400, height: 400,
+            top: "55%", right: "5%", width: 450, height: 450,
             borderRadius: "50%",
-            background: "radial-gradient(ellipse, rgba(124,77,255,0.12) 0%, transparent 70%)",
-            filter: "blur(60px)",
-            animationDelay: "-4s",
+            background: "radial-gradient(ellipse, rgba(124,77,255,0.10) 0%, transparent 70%)",
+            filter: "blur(80px)",
+            animationDelay: "-5s",
           }}
         />
         {/* Scan line */}
         <div
           className="absolute left-0 right-0 h-px animate-scan-line"
           style={{
-            background: `linear-gradient(90deg, transparent, ${rankStyle.border}40, transparent)`,
+            background: `linear-gradient(90deg, transparent, ${rankStyle.border}30, transparent)`,
             animationDuration: "12s",
           }}
-        />
-        {/* Corner accent — top left */}
-        <div className="absolute top-0 left-0 w-64 h-64"
-          style={{ background: "radial-gradient(ellipse at top left, rgba(79,195,247,0.04) 0%, transparent 60%)" }}
         />
       </div>
 
