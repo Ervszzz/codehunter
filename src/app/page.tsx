@@ -297,7 +297,9 @@ export default async function LandingPage() {
             <div className="absolute top-0 left-12 right-12 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(79,195,247,0.5), transparent)" }} />
             <h2 className="font-display font-black text-3xl text-white mb-3">Ready to Hunt?</h2>
             <p className="text-slate-400 mb-8">Connect your GitHub and claim your rank. Your coding history is already waiting.</p>
-            <SignInButton />
+            <div className="flex justify-center">
+              <SignInButton />
+            </div>
           </div>
         </section>
 
