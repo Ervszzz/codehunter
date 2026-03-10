@@ -24,6 +24,9 @@ export async function createBoost(formData: FormData) {
   if (isNaN(multiplier) || multiplier < 1.1 || multiplier > 10) throw new Error("Invalid multiplier");
   if (isNaN(durationMs) || durationMs < 60_000) throw new Error("Invalid duration");
 
+  // Cancel all existing boosts before creating new one
+  await prisma.xPBoost.deleteMany({ where: { expiresAt: { gt: new Date() } } });
+
   await prisma.xPBoost.create({
     data: {
       label,

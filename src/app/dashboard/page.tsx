@@ -7,7 +7,7 @@ import SyncButton from "./SyncButton";
 import AutoSync from "./AutoSync";
 import Particles from "./Particles";
 import BoostBanner from "./BoostBanner";
-import BoostPanel from "./BoostPanel";
+import ArchitectModal from "./ArchitectModal";
 import SignOutButton from "./SignOutButton";
 
 export default async function DashboardPage() {
@@ -43,9 +43,9 @@ export default async function DashboardPage() {
 
   // Fetch active boosts for owner panel
   const isOwner = user.username === OWNER_USERNAME;
-  const activeBoosts = isOwner
-    ? await prisma.xPBoost.findMany({ where: { expiresAt: { gt: new Date() } }, orderBy: { multiplier: "desc" } })
-    : [];
+  const activeBoost = isOwner
+    ? await prisma.xPBoost.findFirst({ where: { expiresAt: { gt: new Date() } }, orderBy: { multiplier: "desc" } })
+    : null;
 
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#050810", color: "#e2e8f0" }}>
@@ -337,8 +337,8 @@ export default async function DashboardPage() {
         {/* ── Active boost banner (all users) ── */}
         <BoostBanner />
 
-        {/* ── Architect boost panel ── */}
-        {isOwner && <BoostPanel activeBoosts={activeBoosts} />}
+        {/* ── Architect modal (floating button, owner only) ── */}
+        {isOwner && <ArchitectModal activeBoost={activeBoost} />}
 
         {/* ── Stats grid ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
