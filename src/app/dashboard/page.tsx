@@ -129,10 +129,10 @@ export default async function DashboardPage() {
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <div
-                className="rounded-full p-px"
+                className="rounded-full p-px animate-border-glow"
                 style={{
-                  background: `conic-gradient(${rankStyle.border}, ${rankStyle.border}40, ${rankStyle.border})`,
-                  animation: "ring-spin 4s linear infinite",
+                  background: `linear-gradient(135deg, ${rankStyle.border}, ${rankStyle.border}40, ${rankStyle.border}90)`,
+                  boxShadow: `0 0 20px ${rankStyle.border}50`,
                 }}
               >
                 {user.avatarUrl ? (
