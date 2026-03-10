@@ -133,6 +133,16 @@ model Achievement {
   @@unique([userId, achievementKey])
 }
 
+model XPBoost {
+  id         String   @id @default(cuid())
+  label      String
+  multiplier Float
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 model XPEvent {
   id          String      @id @default(cuid())
   userId      String
