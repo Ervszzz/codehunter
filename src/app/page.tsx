@@ -238,23 +238,38 @@ export default async function LandingPage() {
               {topHunters.map((hunter, i) => {
                 const rs = RANK_STYLE_MAP[hunter.rank as keyof typeof RANK_STYLE_MAP] ?? RANK_STYLE_MAP.E;
                 const posColor = ["#ffd54f", "#94a3b8", "#b45309"][i] ?? "rgba(148,163,184,0.3)";
+                const isOwner = hunter.username === "Ervszzz";
                 return (
                   <Link
                     key={hunter.username}
                     href={`/hunter/${hunter.username}`}
                     className="flex items-center gap-4 px-5 py-4 transition-all activity-row"
                     style={{
-                      background: i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)",
+                      background: isOwner ? "rgba(255,68,68,0.06)" : i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)",
                       borderBottom: i < topHunters.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                      borderLeft: `3px solid ${posColor}50`,
+                      borderLeft: isOwner ? "3px solid #ff4444" : `3px solid ${posColor}50`,
+                      boxShadow: isOwner ? "inset 0 0 40px rgba(255,68,68,0.04)" : undefined,
                     }}
                   >
-                    <div className="font-display font-black text-sm w-8 text-center" style={{ color: posColor }}>
+                    <div
+                      className="font-display font-black text-sm w-8 text-center"
+                      style={{
+                        color: isOwner ? "#ff4444" : posColor,
+                        textShadow: isOwner ? "0 0 12px rgba(255,68,68,0.7)" : undefined,
+                      }}
+                    >
                       #{i + 1}
                     </div>
                     <div
                       className="rounded-full p-px flex-shrink-0"
-                      style={{ background: `linear-gradient(135deg, ${rs.border}cc, ${rs.border}40)`, boxShadow: `0 0 8px ${rs.border}40` }}
+                      style={{
+                        background: isOwner
+                          ? "linear-gradient(135deg, #ff4444cc, #ff000040)"
+                          : `linear-gradient(135deg, ${rs.border}cc, ${rs.border}40)`,
+                        boxShadow: isOwner
+                          ? "0 0 16px rgba(255,68,68,0.5), 0 0 32px rgba(255,68,68,0.2)"
+                          : `0 0 8px ${rs.border}40`,
+                      }}
                     >
                       {hunter.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -266,14 +281,53 @@ export default async function LandingPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-white truncate">{hunter.name ?? hunter.username}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div
+                          className="font-bold text-sm truncate"
+                          style={{
+                            color: isOwner ? "#ff6666" : "white",
+                            textShadow: isOwner ? "0 0 20px rgba(255,68,68,0.8)" : undefined,
+                          }}
+                        >
+                          {hunter.name ?? hunter.username}
+                        </div>
+                        {isOwner && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full font-display font-bold tracking-wider"
+                            style={{
+                              background: "rgba(255,68,68,0.15)",
+                              border: "1px solid rgba(255,68,68,0.5)",
+                              color: "#ff4444",
+                              boxShadow: "0 0 8px rgba(255,68,68,0.3)",
+                            }}
+                          >
+                            ⚔ The Architect
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-slate-500">@{hunter.username}</div>
                     </div>
-                    <span className="text-xs font-display font-bold px-2.5 py-1 rounded-full hidden sm:block" style={{ background: rs.bg, border: `1px solid ${rs.border}50`, color: rs.color }}>
+                    <span
+                      className="text-xs font-display font-bold px-2.5 py-1 rounded-full hidden sm:block"
+                      style={{
+                        background: isOwner ? "rgba(255,68,68,0.12)" : rs.bg,
+                        border: isOwner ? "1px solid rgba(255,68,68,0.4)" : `1px solid ${rs.border}50`,
+                        color: isOwner ? "#ff4444" : rs.color,
+                        boxShadow: isOwner ? "0 0 10px rgba(255,68,68,0.25)" : undefined,
+                      }}
+                    >
                       {hunter.rank}
                     </span>
                     <div className="text-right flex-shrink-0">
-                      <div className="font-display font-black text-sm" style={{ color: rs.color }}>{hunter.totalXP.toLocaleString()}</div>
+                      <div
+                        className="font-display font-black text-sm"
+                        style={{
+                          color: isOwner ? "#ff4444" : rs.color,
+                          textShadow: isOwner ? "0 0 20px rgba(255,68,68,0.8)" : undefined,
+                        }}
+                      >
+                        {hunter.totalXP.toLocaleString()}
+                      </div>
                       <div className="text-xs text-slate-600">XP</div>
                     </div>
                   </Link>

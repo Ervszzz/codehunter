@@ -86,7 +86,7 @@ export default async function LeaderboardPage() {
         }}
       >
         <Link
-          href="/dashboard"
+          href={currentUserId ? "/dashboard" : "/"}
           className="font-display font-bold tracking-widest text-lg"
           style={{ color: "#4fc3f7", textShadow: "0 0 30px rgba(79,195,247,0.6)" }}
         >
@@ -94,7 +94,7 @@ export default async function LeaderboardPage() {
         </Link>
 
         <Link
-          href="/dashboard"
+          href={currentUserId ? "/dashboard" : "/"}
           className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-all gate-btn"
           style={{ color: "#4fc3f7" }}
         >
