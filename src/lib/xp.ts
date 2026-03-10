@@ -1,4 +1,17 @@
-import { Rank, XPEventType } from "@prisma/client";
+// Define locally to avoid build-time dependency on Prisma-generated client
+export type Rank = "E" | "D" | "C" | "B" | "A" | "S" | "NATIONAL";
+
+export const XPEventType = {
+  COMMIT: "COMMIT",
+  PULL_REQUEST: "PULL_REQUEST",
+  ISSUE: "ISSUE",
+  ACTIVE_DAY: "ACTIVE_DAY",
+  STAR_EARNED: "STAR_EARNED",
+  REPO_CREATED: "REPO_CREATED",
+  FOLLOWER_GAINED: "FOLLOWER_GAINED",
+  FORK_EARNED: "FORK_EARNED",
+} as const;
+export type XPEventType = typeof XPEventType[keyof typeof XPEventType];
 
 // XP values per event type
 export const XP_VALUES: Record<XPEventType, number> = {
@@ -20,7 +33,7 @@ export const RANK_THRESHOLDS: Record<Rank, number> = {
   B: 20000,
   A: 50000,
   S: 120000,
-  NATIONAL: 100, // TEMP: lowered for testing
+  NATIONAL: 300000,
 };
 
 export const RANK_TITLES: Record<Rank, string> = {
@@ -59,7 +72,7 @@ export function calcRank(totalXP: number): Rank {
   for (const [rank, threshold] of thresholds) {
     if (totalXP >= threshold) return rank;
   }
-  return Rank.E;
+  return "E";
 }
 
 export function getPrestigeMultiplier(prestigeTier: number): number {
@@ -76,7 +89,7 @@ export function xpToNextRank(totalXP: number): { rank: Rank; needed: number; pro
   const currentRank = calcRank(totalXP);
   const currentIdx = ranks.indexOf(currentRank);
 
-  if (currentIdx === ranks.length - 1) return null; // Already at NATIONAL
+  if (currentIdx === ranks.length - 1) return null;
 
   const nextRank = ranks[currentIdx + 1];
   const nextThreshold = RANK_THRESHOLDS[nextRank];

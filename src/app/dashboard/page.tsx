@@ -1,9 +1,8 @@
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { calcLevel, calcRank, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
+import { calcLevel, calcRank, Rank, XPEventType, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
 import { redirect } from "next/navigation";
-import { Rank, XPEventType } from "@prisma/client";
 import SyncButton from "./SyncButton";
 
 export default async function DashboardPage() {
