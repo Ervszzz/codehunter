@@ -295,18 +295,16 @@ export default async function DashboardPage() {
             <div className="relative h-3 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
               {/* Fill */}
               <div
-                className="h-full rounded-full animate-xp-bar"
+                className="relative h-full rounded-full animate-xp-bar overflow-hidden"
                 style={{
                   width: `${rankProgress.progress}%`,
                   background: `linear-gradient(90deg, ${rankStyle.border}, ${RANK_STYLES[rankProgress.rank].border})`,
                   boxShadow: `0 0 12px ${rankStyle.border}90, 0 0 24px ${rankStyle.border}40`,
                 }}
-              />
-              {/* Shimmer overlay */}
-              <div
-                className="absolute inset-0 rounded-full xp-bar-shimmer"
-                style={{ mixBlendMode: "overlay" }}
-              />
+              >
+                {/* Shimmer lives inside the fill so it never exceeds the fill width */}
+                <div className="absolute inset-0 xp-bar-shimmer" style={{ mixBlendMode: "overlay" }} />
+              </div>
             </div>
             <div className="flex justify-between mt-2 text-xs" style={{ color: "rgba(148,163,184,0.5)" }}>
               <span>{RANK_THRESHOLDS[user.rank].toLocaleString()} XP</span>
