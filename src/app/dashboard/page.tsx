@@ -1,24 +1,15 @@
-import { auth, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { calcLevel, calcRank, Rank, XPEventType, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
 import { redirect } from "next/navigation";
 import SyncButton from "./SyncButton";
-import { syncUserXP } from "@/actions/syncXP";
+import AutoSync from "./AutoSync";
+import SignOutButton from "./SignOutButton";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-
-  // Auto-sync on login / page load if never synced or last sync >1h ago
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  const quick = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { lastSyncedAt: true },
-  });
-  if (!quick?.lastSyncedAt || quick.lastSyncedAt < oneHourAgo) {
-    await syncUserXP(session.user.id);
-  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -61,7 +52,7 @@ export default async function DashboardPage() {
           CODE<span className="text-white">HUNTER</span>
         </span>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-4">
           {calcRank(user.totalXP) === "NATIONAL" && (
             <Link
               href="/prestige"
@@ -72,21 +63,10 @@ export default async function DashboardPage() {
             </Link>
           )}
           <SyncButton />
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button
-              type="submit"
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors uppercase tracking-wider"
-            >
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </nav>
+      <AutoSync lastSyncedAt={user.lastSyncedAt} />
 
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
         {/* Hunter Card */}
@@ -296,7 +276,7 @@ export default async function DashboardPage() {
               className="rounded-xl p-8 text-center text-slate-500"
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
             >
-              No activity yet. Click &quot;Sync XP&quot; to pull your GitHub data.
+              No activity synced yet. GitHub&apos;s API returns your last ~90 public events — if you haven&apos;t pushed code recently, try again after your next commit.
             </div>
           ) : (
             <div

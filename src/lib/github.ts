@@ -45,10 +45,14 @@ async function githubFetch<T>(path: string, token?: string): Promise<T> {
         "X-GitHub-Api-Version": "2022-11-28",
       },
     });
+    if (retry.status === 429) throw new Error("GitHub API rate limit exceeded. Try again later.");
+    if (retry.status === 403) throw new Error("GitHub API access forbidden.");
     if (!retry.ok) throw new Error(`GitHub API error: ${retry.status} ${path}`);
     return retry.json();
   }
 
+  if (res.status === 429) throw new Error("GitHub API rate limit exceeded. Try again later.");
+  if (res.status === 403) throw new Error("GitHub API access forbidden.");
   if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${path}`);
   return res.json();
 }
