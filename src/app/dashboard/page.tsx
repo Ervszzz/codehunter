@@ -300,14 +300,14 @@ export default async function DashboardPage() {
               </span>
             </div>
             {/* Track */}
-            <div className="relative h-3 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+            <div className="relative h-4 rounded-full" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.06)" }}>
               {/* Fill */}
               <div
-                className="relative h-full rounded-full animate-xp-bar overflow-hidden"
+                className="relative h-full rounded-full overflow-hidden animate-xp-bar"
                 style={{
                   width: `${rankProgress.progress}%`,
                   background: `linear-gradient(90deg, ${rankStyle.border}, ${RANK_STYLES[rankProgress.rank].border})`,
-                  boxShadow: `0 0 12px ${rankStyle.border}90, 0 0 24px ${rankStyle.border}40`,
+                  boxShadow: `0 0 10px ${rankStyle.border}80, 0 0 20px ${rankStyle.border}30`,
                 }}
               >
                 {/* Shimmer lives inside the fill so it never exceeds the fill width */}
