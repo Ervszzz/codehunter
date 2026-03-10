@@ -386,14 +386,12 @@ export default async function DashboardPage() {
                 return (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between px-5 py-3 text-sm transition-colors"
+                    className="activity-row flex items-center justify-between px-5 py-3 text-sm"
                     style={{
                       background: i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)",
                       borderBottom: i < user.xpEvents.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                       borderLeft: `3px solid ${es.color}60`,
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = `${es.color}08`)}
-                    onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)")}
                   >
                     <div className="flex items-center gap-3">
                       <span
