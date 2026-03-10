@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Rank, RANK_TITLES, RANK_THRESHOLDS } from "@/lib/xp";
+import MobileNav from "@/components/MobileNav";
 
 // ── Rank styles ───────────────────────────────────────────────────────────────
 const RANK_STYLES: Record<Rank, { bg: string; border: string; color: string }> = {
@@ -338,6 +339,8 @@ export default async function LeaderboardPage() {
           Rankings update on every GitHub sync — keep committing, hunter.
         </p>
       </div>
+
+      <MobileNav />
     </div>
   );
 }

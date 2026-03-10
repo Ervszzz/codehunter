@@ -47,13 +47,111 @@ interface Props {
   params: Promise<{ username: string }>;
 }
 
+// ── Activity graph helpers ─────────────────────────────────────────────────────
+
+interface DayCell {
+  date: string;       // YYYY-MM-DD
+  xp: number;
+  level: 0 | 1 | 2 | 3 | 4;
+}
+
+function xpToIntensity(xp: number): 0 | 1 | 2 | 3 | 4 {
+  if (xp === 0) return 0;
+  if (xp <= 50) return 1;
+  if (xp <= 150) return 2;
+  if (xp <= 300) return 3;
+  return 4;
+}
+
+function toDateKey(d: Date): string {
+  // Returns YYYY-MM-DD in local-ish ISO format (UTC date)
+  return d.toISOString().slice(0, 10);
+}
+
+function buildContributionGrid(
+  events: { occurredAt: Date; xpAwarded: number }[]
+): { weeks: DayCell[][]; monthLabels: { label: string; col: number }[] } {
+  // Build a map of date -> total XP
+  const xpByDay = new Map<string, number>();
+  for (const ev of events) {
+    const key = toDateKey(ev.occurredAt);
+    xpByDay.set(key, (xpByDay.get(key) ?? 0) + ev.xpAwarded);
+  }
+
+  // Determine the 364-day window: end = today (UTC), start = today - 363 days
+  const now = new Date();
+  const endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const startDate = new Date(endDate);
+  startDate.setUTCDate(startDate.getUTCDate() - 363);
+
+  // Align startDate back to Monday of its week
+  // getUTCDay(): 0=Sun, 1=Mon ... 6=Sat; we want weeks Mon-Sun
+  const startDow = startDate.getUTCDay(); // 0(Sun)..6(Sat)
+  const offsetToMonday = startDow === 0 ? 6 : startDow - 1;
+  const gridStart = new Date(startDate);
+  gridStart.setUTCDate(gridStart.getUTCDate() - offsetToMonday);
+
+  // Build cells week-by-week (column = week, row = day Mon[0]..Sun[6])
+  const weeks: DayCell[][] = [];
+  const monthLabels: { label: string; col: number }[] = [];
+  const cursor = new Date(gridStart);
+
+  // Track which months we've already labelled
+  let lastLabelledMonth = -1;
+
+  while (cursor <= endDate) {
+    const week: DayCell[] = [];
+    for (let dow = 0; dow < 7; dow++) {
+      const dayKey = toDateKey(cursor);
+      const isPast = cursor <= endDate && cursor >= startDate;
+      const xp = isPast ? (xpByDay.get(dayKey) ?? 0) : -1; // -1 = outside range (greyed)
+      week.push({
+        date: dayKey,
+        xp: xp < 0 ? 0 : xp,
+        level: xp < 0 ? 0 : xpToIntensity(xp),
+      });
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    // Month label: label the week col if the Monday of this week starts a new month
+    const weekMonday = new Date(gridStart);
+    weekMonday.setUTCDate(weekMonday.getUTCDate() + weeks.length * 7);
+    const month = weekMonday.getUTCMonth();
+    if (month !== lastLabelledMonth) {
+      monthLabels.push({
+        label: weekMonday.toLocaleString("en-US", { month: "short", timeZone: "UTC" }),
+        col: weeks.length,
+      });
+      lastLabelledMonth = month;
+    }
+    weeks.push(week);
+  }
+
+  return { weeks, monthLabels };
+}
+
+function getCellColor(level: 0 | 1 | 2 | 3 | 4, baseColor: string): string {
+  // baseColor is a hex like #4fc3f7 — we produce opacity variants
+  // level 0 = empty slot (dark background), 1-4 = increasing opacity
+  const opacities = ["rgba(255,255,255,0.04)", "0.25", "0.45", "0.70", "1.0"];
+  if (level === 0) return opacities[0];
+  // Parse hex and build rgba
+  const hex = baseColor.replace("#", "");
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${opacities[level]})`;
+}
+
 export default async function HunterProfilePage({ params }: Props) {
   const { username } = await params;
 
   const user = await prisma.user.findUnique({
     where: { username },
     include: {
-      xpEvents:     { orderBy: { occurredAt: "desc" }, take: 10 },
+      xpEvents: {
+        select: { eventType: true, occurredAt: true, xpAwarded: true, id: true, repoName: true },
+        orderBy: { occurredAt: "desc" },
+      },
       achievements: true,
     },
   });
@@ -80,6 +178,20 @@ export default async function HunterProfilePage({ params }: Props) {
   const accentColor = isOwner ? ARCHITECT.primary  : rankStyle.border;
   const accentGlow  = isOwner ? ARCHITECT.glow     : `${rankStyle.border}90`;
   const cardBg      = isOwner ? ARCHITECT.cardBg   : "rgba(6,10,20,0.97)";
+
+  // ── Activity graph ──────────────────────────────────────────────────────────
+  // Build grid from ALL events (sorted asc for graph)
+  const allEventsAsc = [...user.xpEvents].sort(
+    (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
+  );
+  const { weeks, monthLabels } = buildContributionGrid(allEventsAsc);
+  const graphBaseColor = isOwner ? "#ff4444" : rankStyle.border;
+  const CELL = 12; // px per cell
+  const GAP  = 2;  // px gap
+  const STEP = CELL + GAP;
+
+  // The 10 most recent events for the activity feed
+  const recentEvents = user.xpEvents.slice(0, 10);
 
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#050810", color: "#e2e8f0" }}>
@@ -363,6 +475,95 @@ export default async function HunterProfilePage({ params }: Props) {
           </div>
         )}
 
+        {/* ── Activity Contribution Graph ── */}
+        <div>
+          <SectionDivider label="Activity" color={accentColor} />
+          <div
+            className="rounded-xl p-5"
+            style={{
+              background: isOwner ? "rgba(255,68,68,0.03)" : "rgba(255,255,255,0.02)",
+              border: `1px solid ${isOwner ? "rgba(255,68,68,0.15)" : `${rankStyle.border}15`}`,
+            }}
+          >
+            {/* Horizontally scrollable wrapper */}
+            <div className="overflow-x-auto pb-2">
+              {/* SVG-based grid */}
+              {(() => {
+                const cols = weeks.length;
+                const svgW = cols * STEP - GAP;
+                const svgH = 7 * STEP - GAP;
+                const LABEL_H = 18; // px above grid for month labels
+                const totalH = LABEL_H + svgH;
+
+                return (
+                  <svg
+                    width={svgW}
+                    height={totalH}
+                    style={{ display: "block", minWidth: svgW }}
+                    aria-label="Activity contribution graph"
+                  >
+                    {/* Month labels */}
+                    {monthLabels.map(({ label, col }) => (
+                      <text
+                        key={`${label}-${col}`}
+                        x={col * STEP}
+                        y={LABEL_H - 4}
+                        style={{
+                          fontSize: 10,
+                          fill: "rgba(148,163,184,0.6)",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {label}
+                      </text>
+                    ))}
+
+                    {/* Cells */}
+                    {weeks.map((week, colIdx) =>
+                      week.map((cell, rowIdx) => {
+                        const cellColor = getCellColor(cell.level, graphBaseColor);
+                        return (
+                          <rect
+                            key={cell.date}
+                            x={colIdx * STEP}
+                            y={LABEL_H + rowIdx * STEP}
+                            width={CELL}
+                            height={CELL}
+                            rx={2}
+                            ry={2}
+                            fill={cellColor}
+                            style={cell.level > 0 ? { filter: `drop-shadow(0 0 2px ${cellColor})` } : undefined}
+                          >
+                            <title>{cell.date}: {cell.xp} XP</title>
+                          </rect>
+                        );
+                      })
+                    )}
+                  </svg>
+                );
+              })()}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-2 mt-3 justify-end">
+              <span className="text-xs" style={{ color: "rgba(148,163,184,0.5)" }}>Less</span>
+              {([0, 1, 2, 3, 4] as const).map((level) => (
+                <div
+                  key={level}
+                  style={{
+                    width: CELL,
+                    height: CELL,
+                    borderRadius: 2,
+                    backgroundColor: getCellColor(level, graphBaseColor),
+                    flexShrink: 0,
+                  }}
+                />
+              ))}
+              <span className="text-xs" style={{ color: "rgba(148,163,184,0.5)" }}>More</span>
+            </div>
+          </div>
+        </div>
+
         {/* ── Stats grid ── */}
         <div>
           <SectionDivider label="Hunter Stats" color={isOwner ? ARCHITECT.primary : "#4fc3f7"} />
@@ -385,7 +586,7 @@ export default async function HunterProfilePage({ params }: Props) {
         {/* ── Recent Activity ── */}
         <div>
           <SectionDivider label="Recent Activity" color={isOwner ? ARCHITECT.primary : "#4fc3f7"} />
-          {user.xpEvents.length === 0 ? (
+          {recentEvents.length === 0 ? (
             <div className="rounded-xl p-10 text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <p className="text-slate-400 text-sm">No activity synced yet.</p>
             </div>
@@ -397,7 +598,7 @@ export default async function HunterProfilePage({ params }: Props) {
                 boxShadow:  isOwner ? "0 0 40px rgba(255,68,68,0.08)"   : "0 0 40px rgba(0,0,0,0.4)",
               }}
             >
-              {user.xpEvents.map((event, i) => {
+              {recentEvents.map((event, i) => {
                 const es = EVENT_STYLES[event.eventType as XPEventType];
                 return (
                   <div
@@ -405,7 +606,7 @@ export default async function HunterProfilePage({ params }: Props) {
                     className="activity-row flex items-center justify-between px-5 py-3 text-sm"
                     style={{
                       background:   i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)",
-                      borderBottom: i < user.xpEvents.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                      borderBottom: i < recentEvents.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                       borderLeft:   isOwner ? "3px solid rgba(255,68,68,0.4)" : `3px solid ${es.color}60`,
                     }}
                   >
