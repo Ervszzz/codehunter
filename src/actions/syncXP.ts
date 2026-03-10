@@ -2,8 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getPublicEvents, getUserProfile, getUserRepos } from "@/lib/github";
-import { XP_VALUES, calcLevel, calcRank, getPrestigeMultiplier, getPrestigeTitle } from "@/lib/xp";
-import { XPEventType } from "@prisma/client";
+import { XP_VALUES, XPEventType, calcLevel, calcRank, getPrestigeMultiplier, getPrestigeTitle } from "@/lib/xp";
 import { auth } from "@/lib/auth";
 
 interface SyncResult {

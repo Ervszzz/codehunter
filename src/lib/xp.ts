@@ -1,4 +1,17 @@
-import { Rank, XPEventType } from "@prisma/client";
+// Define locally to avoid build-time dependency on Prisma-generated client
+export type Rank = "E" | "D" | "C" | "B" | "A" | "S" | "NATIONAL";
+
+export const XPEventType = {
+  COMMIT: "COMMIT",
+  PULL_REQUEST: "PULL_REQUEST",
+  ISSUE: "ISSUE",
+  ACTIVE_DAY: "ACTIVE_DAY",
+  STAR_EARNED: "STAR_EARNED",
+  REPO_CREATED: "REPO_CREATED",
+  FOLLOWER_GAINED: "FOLLOWER_GAINED",
+  FORK_EARNED: "FORK_EARNED",
+} as const;
+export type XPEventType = typeof XPEventType[keyof typeof XPEventType];
 
 // XP values per event type
 export const XP_VALUES: Record<XPEventType, number> = {
@@ -59,7 +72,7 @@ export function calcRank(totalXP: number): Rank {
   for (const [rank, threshold] of thresholds) {
     if (totalXP >= threshold) return rank;
   }
-  return Rank.E;
+  return "E";
 }
 
 export function getPrestigeMultiplier(prestigeTier: number): number {

@@ -3,7 +3,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getPrestigeMultiplier, getPrestigeTitle, PRESTIGE_TITLES } from "@/lib/xp";
-import { Rank } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export interface PrestigeResult {
@@ -21,7 +20,7 @@ export async function enterTheVoid(): Promise<PrestigeResult> {
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) return { success: false, error: "User not found" };
 
-  if (user.rank !== Rank.NATIONAL) {
+  if (user.rank !== "NATIONAL") {
     return { success: false, error: "You must reach National Level to prestige" };
   }
 
@@ -37,7 +36,7 @@ export async function enterTheVoid(): Promise<PrestigeResult> {
       xpMultiplier: newMultiplier,
       totalXP: 0,
       level: 1,
-      rank: Rank.E,
+      rank: "E",
     },
   });
 
