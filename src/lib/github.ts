@@ -36,6 +36,19 @@ async function githubFetch<T>(path: string, token?: string): Promise<T> {
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(`${GITHUB_API}${path}`, { headers });
+
+  // If token is invalid, retry without auth (all synced data is public)
+  if (res.status === 401 && token) {
+    const retry = await fetch(`${GITHUB_API}${path}`, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+    if (!retry.ok) throw new Error(`GitHub API error: ${retry.status} ${path}`);
+    return retry.json();
+  }
+
   if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${path}`);
   return res.json();
 }

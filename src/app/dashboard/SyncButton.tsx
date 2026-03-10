@@ -8,14 +8,24 @@ export default function SyncButton() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ xpGained: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSync() {
+    setError(null);
     startTransition(async () => {
-      const res = await syncUserXP();
-      if (res.success) {
-        setResult({ xpGained: res.xpGained });
-        router.refresh();
-        setTimeout(() => setResult(null), 4000);
+      try {
+        const res = await syncUserXP();
+        if (res.success) {
+          setResult({ xpGained: res.xpGained });
+          router.refresh();
+          setTimeout(() => setResult(null), 4000);
+        } else {
+          setError(res.error ?? "Sync failed");
+          setTimeout(() => setError(null), 5000);
+        }
+      } catch (e) {
+        setError(String(e));
+        setTimeout(() => setError(null), 5000);
       }
     });
   }
@@ -56,6 +66,9 @@ export default function SyncButton() {
       )}
       {result && result.xpGained === 0 && (
         <span className="text-xs text-slate-500">Already up to date</span>
+      )}
+      {error && (
+        <span className="text-xs text-red-400">{error}</span>
       )}
     </div>
   );
