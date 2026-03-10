@@ -39,15 +39,58 @@ export default async function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen" style={{ background: "#050810", color: "#e2e8f0" }}>
-      {/* Top nav */}
+    <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#050810", color: "#e2e8f0" }}>
+
+      {/* ── Ambient background effects ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        {/* Large rank-colored orb behind hunter card */}
+        <div
+          className="absolute animate-orb-drift"
+          style={{
+            top: "10%", left: "30%", width: 600, height: 300,
+            borderRadius: "50%",
+            background: `radial-gradient(ellipse, ${rankStyle.border}18 0%, transparent 70%)`,
+            filter: "blur(40px)",
+          }}
+        />
+        {/* Magic purple orb */}
+        <div
+          className="absolute animate-orb-drift"
+          style={{
+            top: "50%", right: "10%", width: 400, height: 400,
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(124,77,255,0.12) 0%, transparent 70%)",
+            filter: "blur(60px)",
+            animationDelay: "-4s",
+          }}
+        />
+        {/* Scan line */}
+        <div
+          className="absolute left-0 right-0 h-px animate-scan-line"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${rankStyle.border}40, transparent)`,
+            animationDuration: "12s",
+          }}
+        />
+        {/* Corner accent — top left */}
+        <div className="absolute top-0 left-0 w-64 h-64"
+          style={{ background: "radial-gradient(ellipse at top left, rgba(79,195,247,0.04) 0%, transparent 60%)" }}
+        />
+      </div>
+
+      {/* ── Nav ── */}
       <nav
-        className="flex items-center justify-between px-6 py-4 border-b"
-        style={{ borderColor: "rgba(79,195,247,0.1)", background: "rgba(5,8,16,0.8)" }}
+        className="relative flex items-center justify-between px-6 py-4 border-b backdrop-blur-md"
+        style={{
+          borderColor: "rgba(79,195,247,0.12)",
+          background: "rgba(5,8,16,0.85)",
+          boxShadow: "0 1px 0 rgba(79,195,247,0.08)",
+          zIndex: 10,
+        }}
       >
         <span
           className="font-display font-bold tracking-widest text-lg"
-          style={{ color: "#4fc3f7", textShadow: "0 0 20px rgba(79,195,247,0.4)" }}
+          style={{ color: "#4fc3f7", textShadow: "0 0 30px rgba(79,195,247,0.6)" }}
         >
           CODE<span className="text-white">HUNTER</span>
         </span>
@@ -68,248 +111,311 @@ export default async function DashboardPage() {
       </nav>
       <AutoSync lastSyncedAt={user.lastSyncedAt} />
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-        {/* Hunter Card */}
+      <div className="relative max-w-6xl mx-auto px-6 py-8 space-y-6" style={{ zIndex: 1 }}>
+
+        {/* ── Hunter Card ── */}
+        {/* Gradient border wrapper */}
         <div
-          className="rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6"
+          className="rounded-2xl p-px animate-border-glow"
           style={{
-            background: "rgba(255,255,255,0.03)",
-            border: `1px solid ${rankStyle.border}30`,
-            boxShadow: `0 0 40px ${rankStyle.border}08`,
+            background: `linear-gradient(135deg, ${rankStyle.border}90 0%, ${rankStyle.border}20 40%, transparent 60%, ${rankStyle.border}50 100%)`,
+            boxShadow: `0 0 80px ${rankStyle.border}18, 0 0 160px ${rankStyle.border}08`,
           }}
         >
-          {/* Avatar */}
-          <div className="relative flex-shrink-0">
-            {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.avatarUrl}
-                alt={user.username ?? "avatar"}
-                className="w-20 h-20 rounded-full object-cover"
-                style={{ border: `2px solid ${rankStyle.border}`, boxShadow: `0 0 16px ${rankStyle.border}40` }}
-              />
-            ) : (
+          <div
+            className="rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6"
+            style={{ background: "rgba(6,10,20,0.97)" }}
+          >
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
               <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-display font-bold"
-                style={{ background: rankStyle.bg, border: `2px solid ${rankStyle.border}`, color: rankStyle.color }}
+                className="rounded-full p-px"
+                style={{
+                  background: `conic-gradient(${rankStyle.border}, ${rankStyle.border}40, ${rankStyle.border})`,
+                  animation: "ring-spin 4s linear infinite",
+                }}
               >
-                {(user.username ?? "?")[0].toUpperCase()}
+                {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.username ?? "avatar"}
+                    className="w-20 h-20 rounded-full object-cover block"
+                    style={{
+                      boxShadow: `0 0 24px ${rankStyle.border}50, 0 0 48px ${rankStyle.border}20`,
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-display font-bold"
+                    style={{ background: rankStyle.bg, color: rankStyle.color }}
+                  >
+                    {(user.username ?? "?")[0].toUpperCase()}
+                  </div>
+                )}
               </div>
-            )}
-            {/* Rank badge overlay */}
-            <span
-              className="absolute -bottom-2 -right-2 text-xs font-display font-bold px-2 py-0.5 rounded-full"
-              style={{ background: rankStyle.bg, border: `1px solid ${rankStyle.border}`, color: rankStyle.color }}
-            >
-              {user.rank}
-            </span>
-          </div>
+              {/* Rank badge */}
+              <span
+                className="absolute -bottom-1 -right-1 text-xs font-display font-bold px-2 py-0.5 rounded-full animate-border-glow"
+                style={{
+                  background: rankStyle.bg,
+                  border: `1px solid ${rankStyle.border}`,
+                  color: rankStyle.color,
+                  boxShadow: `0 0 10px ${rankStyle.border}60`,
+                  textShadow: `0 0 8px ${rankStyle.border}`,
+                }}
+              >
+                {user.rank}
+              </span>
+            </div>
 
-          {/* Identity */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h2 className="text-2xl font-display font-bold text-white truncate">
-                {user.name ?? user.username}
-              </h2>
-              {user.username === OWNER_USERNAME && (
+            {/* Identity */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h2
+                  className="text-2xl font-display font-bold text-white truncate"
+                  style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
+                >
+                  {user.name ?? user.username}
+                </h2>
+                {user.username === OWNER_USERNAME && (
+                  <span
+                    className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider animate-border-glow"
+                    style={{
+                      background: OWNER_STYLE.bg,
+                      border: `1px solid ${OWNER_STYLE.border}`,
+                      color: OWNER_STYLE.color,
+                      boxShadow: `0 0 16px ${OWNER_STYLE.glow}`,
+                      textShadow: `0 0 10px ${OWNER_STYLE.glow}`,
+                    }}
+                  >
+                    {OWNER_STYLE.label}
+                  </span>
+                )}
+                {user.prestigeTier > 0 && (() => {
+                  const ps = getPrestigeStyle(user.prestigeTier);
+                  return (
+                    <span
+                      className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
+                      style={{
+                        background: ps.bg,
+                        border: `1px solid ${ps.border}`,
+                        color: ps.color,
+                        boxShadow: `0 0 12px ${ps.glow}`,
+                        textShadow: `0 0 8px ${ps.glow}`,
+                      }}
+                    >
+                      {ps.label} Prestige {toRoman(user.prestigeTier)}
+                    </span>
+                  );
+                })()}
+              </div>
+              <p className="text-slate-500 text-sm mb-3">@{user.username}</p>
+              <div className="flex flex-wrap items-center gap-3">
                 <span
-                  className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
+                  className="text-sm font-semibold px-3 py-1 rounded-full"
                   style={{
-                    background: OWNER_STYLE.bg,
-                    border: `1px solid ${OWNER_STYLE.border}`,
-                    color: OWNER_STYLE.color,
-                    boxShadow: `0 0 14px ${OWNER_STYLE.glow}`,
-                    textShadow: `0 0 10px ${OWNER_STYLE.glow}`,
+                    background: rankStyle.bg,
+                    border: `1px solid ${rankStyle.border}50`,
+                    color: rankStyle.color,
+                    boxShadow: `0 0 12px ${rankStyle.border}30`,
                   }}
                 >
-                  {OWNER_STYLE.label}
+                  {user.rank === "NATIONAL" ? "★" : user.rank} — {RANK_TITLES[user.rank]}
                 </span>
-              )}
-              {user.prestigeTier > 0 && (() => {
-                const ps = getPrestigeStyle(user.prestigeTier);
-                return (
-                  <span
-                    className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
-                    style={{
-                      background: ps.bg,
-                      border: `1px solid ${ps.border}`,
-                      color: ps.color,
-                      boxShadow: `0 0 12px ${ps.glow}`,
-                      textShadow: `0 0 8px ${ps.glow}`,
-                    }}
-                  >
-                    {ps.label} Prestige {toRoman(user.prestigeTier)}
-                  </span>
-                );
-              })()}
-            </div>
-            <p className="text-slate-400 text-sm mb-3">@{user.username}</p>
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className="text-sm font-semibold px-3 py-1 rounded-full"
-                style={{ background: rankStyle.bg, border: `1px solid ${rankStyle.border}40`, color: rankStyle.color }}
-              >
-                {user.rank === "NATIONAL" ? "★" : user.rank} — {RANK_TITLES[user.rank]}
-              </span>
-              <span className="text-slate-400 text-sm">
-                Level <span className="text-white font-bold">{user.level}</span>
-              </span>
-              {prestigeTitle && (() => {
-                const ps = getPrestigeStyle(user.prestigeTier);
-                return (
-                  <span
-                    className="text-sm font-display font-bold px-3 py-1 rounded-full"
-                    style={{
-                      background: ps.bg,
-                      border: `1px solid ${ps.border}`,
-                      color: ps.color,
-                      boxShadow: `0 0 14px ${ps.glow}`,
-                      textShadow: `0 0 10px ${ps.glow}`,
-                    }}
-                  >
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline", marginRight: 5, verticalAlign: "middle", opacity: 0.85 }}>
-                      <path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z"/>
-                    </svg>
-                    &ldquo;{prestigeTitle}&rdquo;
-                  </span>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* XP total */}
-          <div className="text-right flex-shrink-0">
-            <div
-              className="text-4xl font-display font-black"
-              style={{ color: rankStyle.color, textShadow: `0 0 20px ${rankStyle.border}40` }}
-            >
-              {user.totalXP.toLocaleString()}
-            </div>
-            <div className="text-xs text-slate-500 tracking-wider uppercase">Total XP</div>
-            {user.lastSyncedAt && (
-              <div className="text-xs text-slate-600 mt-1">
-                Synced {timeAgo(user.lastSyncedAt)}
+                <span className="text-slate-400 text-sm">
+                  Lv. <span className="font-bold text-white">{user.level}</span>
+                </span>
+                {prestigeTitle && (() => {
+                  const ps = getPrestigeStyle(user.prestigeTier);
+                  return (
+                    <span
+                      className="text-sm font-display font-bold px-3 py-1 rounded-full"
+                      style={{
+                        background: ps.bg,
+                        border: `1px solid ${ps.border}`,
+                        color: ps.color,
+                        boxShadow: `0 0 14px ${ps.glow}`,
+                        textShadow: `0 0 10px ${ps.glow}`,
+                      }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline", marginRight: 5, verticalAlign: "middle", opacity: 0.85 }}>
+                        <path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z"/>
+                      </svg>
+                      &ldquo;{prestigeTitle}&rdquo;
+                    </span>
+                  );
+                })()}
               </div>
-            )}
+            </div>
+
+            {/* XP total */}
+            <div className="text-right flex-shrink-0">
+              <div
+                className="font-display font-black"
+                style={{
+                  fontSize: "clamp(2rem, 5vw, 3rem)",
+                  color: rankStyle.color,
+                  textShadow: `0 0 30px ${rankStyle.border}80, 0 0 60px ${rankStyle.border}30`,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {user.totalXP.toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-500 tracking-widest uppercase mt-0.5">Total XP</div>
+              {user.lastSyncedAt && (
+                <div className="text-xs mt-1" style={{ color: `${rankStyle.border}60` }}>
+                  ⟳ {timeAgo(user.lastSyncedAt)}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* XP Progress bar */}
+        {/* ── XP Progress bar ── */}
         {rankProgress ? (
           <div
             className="rounded-xl p-5"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(79,195,247,0.1)" }}
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: `1px solid ${rankStyle.border}20`,
+              boxShadow: `inset 0 0 40px ${rankStyle.border}04`,
+            }}
           >
             <div className="flex justify-between items-center mb-3">
-              <span className="text-sm text-slate-400">
+              <span className="text-sm font-semibold tracking-wider" style={{ color: "rgba(226,232,240,0.7)" }}>
                 Progress to Rank{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: RANK_STYLES[rankProgress.rank].color }}
-                >
-                  {rankProgress.rank}
+                <span className="font-bold" style={{ color: RANK_STYLES[rankProgress.rank].color }}>
+                  {rankProgress.rank} — {RANK_TITLES[rankProgress.rank]}
                 </span>
               </span>
-              <span className="text-sm text-slate-400">
-                <span className="text-white font-semibold">{rankProgress.needed.toLocaleString()}</span> XP needed
+              <span className="text-sm font-bold" style={{ color: rankStyle.color }}>
+                {rankProgress.needed.toLocaleString()} XP left
               </span>
             </div>
-            <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+            {/* Track */}
+            <div className="relative h-3 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+              {/* Fill */}
               <div
                 className="h-full rounded-full animate-xp-bar"
                 style={{
                   width: `${rankProgress.progress}%`,
                   background: `linear-gradient(90deg, ${rankStyle.border}, ${RANK_STYLES[rankProgress.rank].border})`,
-                  boxShadow: `0 0 8px ${rankStyle.border}80`,
+                  boxShadow: `0 0 12px ${rankStyle.border}90, 0 0 24px ${rankStyle.border}40`,
                 }}
               />
+              {/* Shimmer overlay */}
+              <div
+                className="absolute inset-0 rounded-full xp-bar-shimmer"
+                style={{ mixBlendMode: "overlay" }}
+              />
             </div>
-            <div className="flex justify-between mt-2 text-xs text-slate-600">
+            <div className="flex justify-between mt-2 text-xs" style={{ color: "rgba(148,163,184,0.5)" }}>
               <span>{RANK_THRESHOLDS[user.rank].toLocaleString()} XP</span>
-              <span>{rankProgress.progress.toFixed(1)}%</span>
+              <span style={{ color: rankStyle.color }}>{rankProgress.progress.toFixed(1)}%</span>
               <span>{RANK_THRESHOLDS[rankProgress.rank].toLocaleString()} XP</span>
             </div>
           </div>
         ) : (
           <div
-            className="rounded-xl p-5 text-center"
+            className="rounded-xl p-5 text-center animate-border-glow"
             style={{
-              background: "rgba(255,213,79,0.05)",
-              border: "1px solid rgba(255,213,79,0.3)",
-              boxShadow: "0 0 30px rgba(255,213,79,0.1)",
+              background: "rgba(255,213,79,0.04)",
+              border: "1px solid rgba(255,213,79,0.4)",
+              boxShadow: "0 0 40px rgba(255,213,79,0.12), inset 0 0 40px rgba(255,213,79,0.04)",
             }}
           >
-            <p className="font-display font-bold text-lg" style={{ color: "#ffd54f" }}>
-              ★ NATIONAL LEVEL ACHIEVED ★
-            </p>
+            <p className="font-display font-bold text-lg shimmer-text">★ NATIONAL LEVEL ACHIEVED ★</p>
             <p className="text-slate-400 text-sm mt-1">You have reached the pinnacle. Consider entering the Prestige.</p>
           </div>
         )}
 
-        {/* Stats grid */}
+        {/* ── Stats grid ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {STAT_CARDS(statsMap).map(({ label, value, sub, color }) => (
             <div
               key={label}
-              className="rounded-xl p-4"
-              style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${color}20` }}
+              className="rounded-xl p-5 card-hover relative overflow-hidden"
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                border: `1px solid ${color}20`,
+                boxShadow: `0 0 20px ${color}08`,
+              }}
             >
-              <div className="text-2xl font-bold mb-0.5" style={{ color }}>
+              {/* Top accent line */}
+              <div
+                className="absolute top-0 left-4 right-4 h-px"
+                style={{ background: `linear-gradient(90deg, transparent, ${color}80, transparent)` }}
+              />
+              <div
+                className="text-3xl font-display font-black mb-1"
+                style={{ color, textShadow: `0 0 20px ${color}60` }}
+              >
                 {value}
               </div>
-              <div className="text-sm text-slate-400">{label}</div>
-              {sub && <div className="text-xs text-slate-600 mt-0.5">{sub}</div>}
+              <div className="text-sm text-slate-400 font-semibold">{label}</div>
+              {sub && <div className="text-xs mt-1" style={{ color: `${color}70` }}>{sub}</div>}
             </div>
           ))}
         </div>
 
-        {/* Activity log */}
+        {/* ── Activity log ── */}
         <div>
-          <h3
-            className="text-xs font-semibold tracking-widest uppercase mb-4"
-            style={{ color: "#4fc3f7" }}
-          >
-            Recent Activity
-          </h3>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, rgba(79,195,247,0.3), transparent)" }} />
+            <h3 className="text-xs font-bold tracking-widest uppercase" style={{ color: "#4fc3f7" }}>
+              Recent Activity
+            </h3>
+            <div className="h-px flex-1" style={{ background: "linear-gradient(270deg, rgba(79,195,247,0.3), transparent)" }} />
+          </div>
           {user.xpEvents.length === 0 ? (
             <div
-              className="rounded-xl p-8 text-center text-slate-500"
+              className="rounded-xl p-10 text-center"
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
             >
-              No activity synced yet. GitHub&apos;s API returns your last ~90 public events — if you haven&apos;t pushed code recently, try again after your next commit.
+              <p className="text-slate-400 text-sm">No activity synced yet.</p>
+              <p className="text-slate-600 text-xs mt-2">GitHub&apos;s API returns your last ~90 public events — if you haven&apos;t pushed code recently, try again after your next commit.</p>
             </div>
           ) : (
             <div
               className="rounded-xl overflow-hidden"
-              style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 0 40px rgba(0,0,0,0.4)" }}
             >
               {user.xpEvents.map((event, i) => {
                 const es = EVENT_STYLES[event.eventType];
                 return (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between px-5 py-3 text-sm"
+                    className="flex items-center justify-between px-5 py-3 text-sm transition-colors"
                     style={{
-                      background: i % 2 === 0 ? "rgba(255,255,255,0.015)" : "transparent",
+                      background: i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)",
                       borderBottom: i < user.xpEvents.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                      borderLeft: `3px solid ${es.color}60`,
                     }}
+                    onMouseEnter={e => (e.currentTarget.style.background = `${es.color}08`)}
+                    onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)")}
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className="text-xs font-bold px-2 py-0.5 rounded"
-                        style={{ background: `${es.color}15`, color: es.color }}
+                        className="text-xs font-bold px-2.5 py-0.5 rounded-md"
+                        style={{
+                          background: `${es.color}15`,
+                          color: es.color,
+                          border: `1px solid ${es.color}30`,
+                          boxShadow: `0 0 8px ${es.color}20`,
+                        }}
                       >
                         {es.label}
                       </span>
-                      <span className="text-slate-400 truncate max-w-[180px] sm:max-w-xs">
+                      <span className="text-slate-400 truncate max-w-[180px] sm:max-w-xs text-xs">
                         {event.repoName ?? "—"}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 flex-shrink-0">
-                      <span className="font-bold" style={{ color: es.color }}>
+                      <span className="font-bold text-sm" style={{ color: es.color, textShadow: `0 0 10px ${es.color}60` }}>
                         +{event.xpAwarded} XP
                       </span>
-                      <span className="text-xs text-slate-600 hidden sm:block">
+                      <span className="text-xs hidden sm:block" style={{ color: "rgba(148,163,184,0.4)" }}>
                         {timeAgo(event.occurredAt)}
                       </span>
                     </div>
