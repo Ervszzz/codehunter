@@ -19,6 +19,12 @@ const rajdhani = Rajdhani({
 export const metadata: Metadata = {
   title: "CodeHunter",
   description: "Turn your GitHub activity into XP, levels, and ranks. Your code is your power.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CodeHunter",
+  },
 };
 
 export default function RootLayout({
@@ -28,6 +34,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="theme-color" content="#050810" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body className={`${cinzel.variable} ${rajdhani.variable} antialiased`}>
         {children}
       </body>

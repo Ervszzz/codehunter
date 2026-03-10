@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a1128"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4fc3f7" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4fc3f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bg)"/>
+  <!-- Glow orb -->
+  <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-opacity="0.4"/>
+  <!-- Inner ring -->
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#7c4dff" stroke-width="1" stroke-opacity="0.3"/>
+  <!-- CH letters -->
+  <text x="256" y="300" font-family="serif" font-size="160" font-weight="900" text-anchor="middle"
+        fill="none" stroke="#4fc3f7" stroke-width="3" stroke-opacity="0.9">CH</text>
+  <text x="256" y="300" font-family="serif" font-size="160" font-weight="900" text-anchor="middle"
+        fill="#4fc3f7" fill-opacity="0.95">CH</text>
+  <!-- Bottom label -->
+  <text x="256" y="440" font-family="sans-serif" font-size="36" font-weight="bold" text-anchor="middle"
+        fill="#7c4dff" fill-opacity="0.8" letter-spacing="8">HUNTER</text>
+  <!-- Corner accent dots -->
+  <circle cx="256" cy="80" r="4" fill="#4fc3f7" opacity="0.6"/>
+  <circle cx="256" cy="432" r="4" fill="#4fc3f7" opacity="0.6"/>
+  <circle cx="80" cy="256" r="4" fill="#7c4dff" opacity="0.6"/>
+  <circle cx="432" cy="256" r="4" fill="#7c4dff" opacity="0.6"/>
+</svg>
