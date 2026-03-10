@@ -21,7 +21,7 @@ export async function createBoost(formData: FormData) {
   const multiplier = parseFloat(String(formData.get("multiplier") || "2"));
   const durationMs = parseInt(String(formData.get("durationMs") || "3600000"), 10);
 
-  if (isNaN(multiplier) || multiplier < 1.1 || multiplier > 10) throw new Error("Invalid multiplier");
+  if (isNaN(multiplier) || multiplier < 1.1 || multiplier > 50) throw new Error("Invalid multiplier");
   if (isNaN(durationMs) || durationMs < 60_000) throw new Error("Invalid duration");
 
   // Cancel all existing boosts before creating new one
