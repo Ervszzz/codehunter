@@ -14,6 +14,8 @@ import {
 import ShareButton from "./ShareButton";
 
 // ── Rank styles ───────────────────────────────────────────────────────────────
+const OWNER_USERNAME = "Ervszzz";
+
 const RANK_STYLES: Record<Rank, { bg: string; border: string; color: string }> = {
   E: { bg: "rgba(30,41,59,0.6)", border: "#94a3b8", color: "#94a3b8" },
   D: { bg: "rgba(5,46,22,0.6)", border: "#4ade80", color: "#4ade80" },
@@ -199,6 +201,20 @@ export default async function HunterProfilePage({ params }: Props) {
                 >
                   {user.name ?? user.username}
                 </h2>
+                {user.username === OWNER_USERNAME && (
+                  <span
+                    className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
+                    style={{
+                      background: "rgba(255,68,68,0.08)",
+                      border: "1px solid rgba(255,68,68,0.45)",
+                      color: "#ff4444",
+                      boxShadow: "0 0 16px rgba(255,68,68,0.5)",
+                      textShadow: "0 0 10px rgba(255,68,68,0.5)",
+                    }}
+                  >
+                    ⚔ The Architect
+                  </span>
+                )}
                 {user.prestigeTier > 0 && (() => {
                   const ps = getPrestigeStyle(user.prestigeTier);
                   return (
