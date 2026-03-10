@@ -4,10 +4,21 @@ import Link from "next/link";
 import { calcLevel, calcRank, Rank, XPEventType, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle } from "@/lib/xp";
 import { redirect } from "next/navigation";
 import SyncButton from "./SyncButton";
+import { syncUserXP } from "@/actions/syncXP";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+
+  // Auto-sync on login / page load if never synced or last sync >1h ago
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const quick = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { lastSyncedAt: true },
+  });
+  if (!quick?.lastSyncedAt || quick.lastSyncedAt < oneHourAgo) {
+    await syncUserXP(session.user.id);
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
