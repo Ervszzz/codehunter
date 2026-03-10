@@ -1,10 +1,3 @@
-import { signIn } from "@/lib/auth";
-
-async function signInWithGitHub() {
-  "use server";
-  await signIn("github", { redirectTo: "/dashboard" });
-}
-
 export default function LoginPage() {
   return (
     <main
@@ -102,15 +95,13 @@ export default function LoginPage() {
         </div>
 
         {/* Sign in button */}
-        <form action={signInWithGitHub}>
-          <button
-            type="submit"
-            className="gate-btn flex items-center gap-3 px-10 py-4 rounded-lg font-display font-bold text-sm tracking-widest text-white uppercase cursor-pointer"
-          >
-            <GitHubIcon />
-            Enter the Gate
-          </button>
-        </form>
+        <a
+          href="/api/auth/signin/github"
+          className="gate-btn flex items-center gap-3 px-10 py-4 rounded-lg font-display font-bold text-sm tracking-widest text-white uppercase cursor-pointer"
+        >
+          <GitHubIcon />
+          Enter the Gate
+        </a>
 
         {/* Privacy note */}
         <p className="mt-6 text-xs text-slate-600 max-w-xs">
