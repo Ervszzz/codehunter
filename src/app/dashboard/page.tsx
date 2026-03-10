@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import SyncButton from "./SyncButton";
 import AutoSync from "./AutoSync";
 import Particles from "./Particles";
+import BoostBanner from "./BoostBanner";
+import BoostPanel from "./BoostPanel";
 import SignOutButton from "./SignOutButton";
 
 export default async function DashboardPage() {
@@ -38,6 +40,12 @@ export default async function DashboardPage() {
   const statsMap = Object.fromEntries(
     statsByType.map((s) => [s.eventType, { count: s._count.id, xp: s._sum.xpAwarded ?? 0 }])
   );
+
+  // Fetch active boosts for owner panel
+  const isOwner = user.username === OWNER_USERNAME;
+  const activeBoosts = isOwner
+    ? await prisma.xPBoost.findMany({ where: { expiresAt: { gt: new Date() } }, orderBy: { multiplier: "desc" } })
+    : [];
 
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#050810", color: "#e2e8f0" }}>
@@ -325,6 +333,12 @@ export default async function DashboardPage() {
             <p className="text-slate-400 text-sm mt-1">You have reached the pinnacle. Consider entering the Prestige.</p>
           </div>
         )}
+
+        {/* ── Active boost banner (all users) ── */}
+        <BoostBanner />
+
+        {/* ── Architect boost panel ── */}
+        {isOwner && <BoostPanel activeBoosts={activeBoosts} />}
 
         {/* ── Stats grid ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

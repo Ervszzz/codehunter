@@ -35,7 +35,14 @@ export async function syncUserXP(userId?: string): Promise<SyncResult> {
       getUserRepos(user.username, token),
     ]);
 
-    const multiplier = getPrestigeMultiplier(user.prestigeTier);
+    const prestigeMultiplier = getPrestigeMultiplier(user.prestigeTier);
+
+    // Check for active boost event (stacks multiplicatively with prestige)
+    const activeBoost = await prisma.xPBoost.findFirst({
+      where: { expiresAt: { gt: new Date() } },
+      orderBy: { multiplier: "desc" },
+    });
+    const multiplier = prestigeMultiplier * (activeBoost?.multiplier ?? 1.0);
 
     // Get already-processed event IDs to avoid double-counting
     const existingEventIds = await prisma.xPEvent.findMany({
