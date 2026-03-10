@@ -1,51 +1,68 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { calcLevel, calcRank, Rank, XPEventType, RANK_TITLES, xpToNextRank, RANK_THRESHOLDS, getPrestigeTitle, calcStreak } from "@/lib/xp";
-import { ACHIEVEMENT_DEFS, ACHIEVEMENT_MAP, type AchievementRarity } from "@/lib/achievements";
-import { redirect } from "next/navigation";
-import SyncButton from "./SyncButton";
-import AutoSync from "./AutoSync";
-import Particles from "./Particles";
-import BoostBanner from "./BoostBanner";
-import ArchitectModal from "./ArchitectModal";
-import SignOutButton from "./SignOutButton";
+import { notFound } from "next/navigation";
+import {
+  Rank,
+  RANK_TITLES,
+  RANK_THRESHOLDS,
+  XPEventType,
+  calcLevel,
+  calcRank,
+  xpToNextRank,
+  getPrestigeTitle,
+} from "@/lib/xp";
+import ShareButton from "./ShareButton";
 
-export default async function DashboardPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+// ── Rank styles ───────────────────────────────────────────────────────────────
+const RANK_STYLES: Record<Rank, { bg: string; border: string; color: string }> = {
+  E: { bg: "rgba(30,41,59,0.6)", border: "#94a3b8", color: "#94a3b8" },
+  D: { bg: "rgba(5,46,22,0.6)", border: "#4ade80", color: "#4ade80" },
+  C: { bg: "rgba(12,26,46,0.6)", border: "#4fc3f7", color: "#4fc3f7" },
+  B: { bg: "rgba(26,9,56,0.6)", border: "#7c4dff", color: "#7c4dff" },
+  A: { bg: "rgba(31,21,0,0.6)", border: "#ffd54f", color: "#ffd54f" },
+  S: { bg: "rgba(31,0,0,0.6)", border: "#ef4444", color: "#ef4444" },
+  NATIONAL: { bg: "rgba(26,10,0,0.6)", border: "#ff9800", color: "#ff9800" },
+};
+
+const EVENT_STYLES: Record<XPEventType, { label: string; color: string }> = {
+  COMMIT: { label: "Commit", color: "#4fc3f7" },
+  PULL_REQUEST: { label: "PR", color: "#7c4dff" },
+  ISSUE: { label: "Issue", color: "#4ade80" },
+  ACTIVE_DAY: { label: "Active Day", color: "#ffd54f" },
+  STAR_EARNED: { label: "Star", color: "#ffd54f" },
+  REPO_CREATED: { label: "New Repo", color: "#7c4dff" },
+  FOLLOWER_GAINED: { label: "Follower", color: "#4ade80" },
+  FORK_EARNED: { label: "Fork", color: "#4fc3f7" },
+};
+
+interface Props {
+  params: Promise<{ username: string }>;
+}
+
+export default async function HunterProfilePage({ params }: Props) {
+  const { username } = await params;
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { username },
     include: {
       xpEvents: {
         orderBy: { occurredAt: "desc" },
-        take: 100, // need more events to calculate streaks accurately
+        take: 10,
       },
-      achievements: {
-        orderBy: { unlockedAt: "asc" },
-      },
+      achievements: true,
     },
   });
 
-  if (!user) redirect("/login");
+  if (!user) notFound();
 
+  // Use live-computed values (don't trust stale DB rank/level)
+  const liveRank = calcRank(user.totalXP);
+  const liveLevel = calcLevel(user.totalXP);
+  const rankStyle = RANK_STYLES[liveRank];
   const rankProgress = xpToNextRank(user.totalXP);
   const prestigeTitle = getPrestigeTitle(user.prestigeTier);
-  const rankStyle = RANK_STYLES[user.rank];
 
-  // Streak: derive from ACTIVE_DAY xpEvents already loaded
-  const activeDayDates = user.xpEvents
-    .filter((e) => e.eventType === XPEventType.ACTIVE_DAY)
-    .map((e) => e.occurredAt);
-  const currentStreak = calcStreak(activeDayDates);
-
-  // Achievements
-  const unlockedKeys = new Set(user.achievements.map((a) => a.achievementKey));
-  const unlockedCount = unlockedKeys.size;
-  const lockedCount = ACHIEVEMENT_DEFS.length - unlockedCount;
-
-  // Per-event-type XP totals for stats
+  // Stats from xpEvents groupBy
   const statsByType = await prisma.xPEvent.groupBy({
     by: ["eventType"],
     where: { userId: user.id },
@@ -56,26 +73,17 @@ export default async function DashboardPage() {
     statsByType.map((s) => [s.eventType, { count: s._count.id, xp: s._sum.xpAwarded ?? 0 }])
   );
 
-  // Fetch active boosts for owner panel
-  const isOwner = user.username === OWNER_USERNAME;
-  const activeBoost = isOwner
-    ? await prisma.xPBoost.findFirst({ where: { expiresAt: { gt: new Date() } }, orderBy: { multiplier: "desc" } })
-    : null;
-
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#050810", color: "#e2e8f0" }}>
 
-      {/* ── Particle background ── */}
-      <Particles count={70} />
-
-      {/* ── Ambient glow orbs (static, behind particles) ── */}
+      {/* ── Ambient glow orbs ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         <div
           className="absolute animate-orb-drift"
           style={{
             top: "5%", left: "25%", width: 700, height: 350,
             borderRadius: "50%",
-            background: `radial-gradient(ellipse, ${rankStyle.border}12 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse, ${rankStyle.border}10 0%, transparent 70%)`,
             filter: "blur(60px)",
           }}
         />
@@ -84,16 +92,15 @@ export default async function DashboardPage() {
           style={{
             top: "55%", right: "5%", width: 450, height: 450,
             borderRadius: "50%",
-            background: "radial-gradient(ellipse, rgba(124,77,255,0.10) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse, rgba(124,77,255,0.08) 0%, transparent 70%)",
             filter: "blur(80px)",
             animationDelay: "-5s",
           }}
         />
-        {/* Scan line */}
         <div
           className="absolute left-0 right-0 h-px animate-scan-line"
           style={{
-            background: `linear-gradient(90deg, transparent, ${rankStyle.border}30, transparent)`,
+            background: `linear-gradient(90deg, transparent, ${rankStyle.border}25, transparent)`,
             animationDuration: "12s",
           }}
         />
@@ -109,47 +116,29 @@ export default async function DashboardPage() {
           zIndex: 10,
         }}
       >
-        <span
+        <Link
+          href="/dashboard"
           className="font-display font-bold tracking-widest text-lg"
           style={{ color: "#4fc3f7", textShadow: "0 0 30px rgba(79,195,247,0.6)" }}
         >
           CODE<span className="text-white">HUNTER</span>
-        </span>
+        </Link>
 
-        <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-4">
-          {calcRank(user.totalXP) === "NATIONAL" && (
-            <Link
-              href="/prestige"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all animate-glow-pulse"
-              style={{ color: "#7c4dff", border: "1px solid rgba(124,77,255,0.4)", background: "rgba(124,77,255,0.08)" }}
-            >
-              ★ Prestige
-            </Link>
-          )}
+        <div className="flex items-center gap-3">
           <Link
             href="/leaderboard"
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all gate-btn"
+            className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-all gate-btn"
             style={{ color: "#4fc3f7" }}
           >
-            Rankings
+            ← Rankings
           </Link>
-          <Link
-            href="/guild"
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all"
-            style={{ color: "#ffd54f", border: "1px solid rgba(255,213,79,0.35)", background: "rgba(255,213,79,0.06)" }}
-          >
-            ⚔ Guild
-          </Link>
-          <SyncButton />
-          <SignOutButton />
+          <ShareButton />
         </div>
       </nav>
-      <AutoSync lastSyncedAt={user.lastSyncedAt} />
 
-      <div className="relative max-w-6xl mx-auto px-6 py-8 space-y-6" style={{ zIndex: 1 }}>
+      <div className="relative max-w-3xl mx-auto px-6 py-10 space-y-6" style={{ zIndex: 1 }}>
 
         {/* ── Hunter Card ── */}
-        {/* Gradient border wrapper — static glow, no pulse */}
         <div
           className="rounded-2xl p-px"
           style={{
@@ -197,7 +186,7 @@ export default async function DashboardPage() {
                   textShadow: `0 0 8px ${rankStyle.border}`,
                 }}
               >
-                {user.rank}
+                {liveRank}
               </span>
             </div>
 
@@ -210,20 +199,6 @@ export default async function DashboardPage() {
                 >
                   {user.name ?? user.username}
                 </h2>
-                {user.username === OWNER_USERNAME && (
-                  <span
-                    className="text-xs px-3 py-1 rounded-full font-display font-bold tracking-wider"
-                    style={{
-                      background: OWNER_STYLE.bg,
-                      border: `1px solid ${OWNER_STYLE.border}`,
-                      color: OWNER_STYLE.color,
-                      boxShadow: `0 0 16px ${OWNER_STYLE.glow}`,
-                      textShadow: `0 0 10px ${OWNER_STYLE.glow}`,
-                    }}
-                  >
-                    {OWNER_STYLE.label}
-                  </span>
-                )}
                 {user.prestigeTier > 0 && (() => {
                   const ps = getPrestigeStyle(user.prestigeTier);
                   return (
@@ -234,7 +209,6 @@ export default async function DashboardPage() {
                         border: `1px solid ${ps.border}`,
                         color: ps.color,
                         boxShadow: `0 0 12px ${ps.glow}`,
-                        textShadow: `0 0 8px ${ps.glow}`,
                       }}
                     >
                       {ps.label} Prestige {toRoman(user.prestigeTier)}
@@ -253,24 +227,11 @@ export default async function DashboardPage() {
                     boxShadow: `0 0 12px ${rankStyle.border}30`,
                   }}
                 >
-                  {user.rank === "NATIONAL" ? "★" : user.rank} — {RANK_TITLES[user.rank]}
+                  {liveRank === "NATIONAL" ? "★" : liveRank} — {RANK_TITLES[liveRank]}
                 </span>
                 <span className="text-slate-400 text-sm">
-                  Lv. <span className="font-bold text-white">{user.level}</span>
+                  Lv. <span className="font-bold text-white">{liveLevel}</span>
                 </span>
-                {currentStreak > 0 && (
-                  <span
-                    className="text-xs font-bold px-2.5 py-1 rounded-full"
-                    style={{
-                      background: "rgba(255,213,79,0.12)",
-                      border: "1px solid rgba(255,213,79,0.35)",
-                      color: "#ffd54f",
-                      boxShadow: "0 0 10px rgba(255,213,79,0.25)",
-                    }}
-                  >
-                    🔥 {currentStreak} day streak
-                  </span>
-                )}
                 {prestigeTitle && (() => {
                   const ps = getPrestigeStyle(user.prestigeTier);
                   return (
@@ -284,9 +245,6 @@ export default async function DashboardPage() {
                         textShadow: `0 0 10px ${ps.glow}`,
                       }}
                     >
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline", marginRight: 5, verticalAlign: "middle", opacity: 0.85 }}>
-                        <path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z"/>
-                      </svg>
                       &ldquo;{prestigeTitle}&rdquo;
                     </span>
                   );
@@ -308,9 +266,9 @@ export default async function DashboardPage() {
                 {user.totalXP.toLocaleString()}
               </div>
               <div className="text-xs text-slate-500 tracking-widest uppercase mt-0.5">Total XP</div>
-              {user.lastSyncedAt && (
-                <div className="text-xs mt-1" style={{ color: `${rankStyle.border}60` }}>
-                  ⟳ {timeAgo(user.lastSyncedAt)}
+              {user.achievements.length > 0 && (
+                <div className="text-xs mt-1.5 font-semibold" style={{ color: "#ffd54f" }}>
+                  ★ {user.achievements.length} Achievement{user.achievements.length !== 1 ? "s" : ""}
                 </div>
               )}
             </div>
@@ -338,9 +296,7 @@ export default async function DashboardPage() {
                 {rankProgress.needed.toLocaleString()} XP left
               </span>
             </div>
-            {/* Track */}
             <div className="relative h-4 rounded-full overflow-hidden" style={{ background: "rgba(10,14,26,0.9)" }}>
-              {/* Fill */}
               <div
                 className="relative h-full rounded-full overflow-hidden"
                 style={{
@@ -353,7 +309,7 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="flex justify-between mt-2 text-xs" style={{ color: "rgba(148,163,184,0.5)" }}>
-              <span>{RANK_THRESHOLDS[user.rank].toLocaleString()} XP</span>
+              <span>{RANK_THRESHOLDS[liveRank].toLocaleString()} XP</span>
               <span style={{ color: rankStyle.color }}>{rankProgress.progress.toFixed(1)}%</span>
               <span>{RANK_THRESHOLDS[rankProgress.rank].toLocaleString()} XP</span>
             </div>
@@ -368,46 +324,48 @@ export default async function DashboardPage() {
             }}
           >
             <p className="font-display font-bold text-lg shimmer-text">★ NATIONAL LEVEL ACHIEVED ★</p>
-            <p className="text-slate-400 text-sm mt-1">You have reached the pinnacle. Consider entering the Prestige.</p>
+            <p className="text-slate-400 text-sm mt-1">This hunter has reached the pinnacle.</p>
           </div>
         )}
 
-        {/* ── Active boost banner (all users) ── */}
-        <BoostBanner />
-
-        {/* ── Architect modal (floating button, owner only) ── */}
-        {isOwner && <ArchitectModal activeBoost={activeBoost ? { ...activeBoost, expiresAt: activeBoost.expiresAt.toISOString() } : null} />}
-
         {/* ── Stats grid ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {STAT_CARDS(statsMap).map(({ label, value, sub, color }) => (
-            <div
-              key={label}
-              className="rounded-xl p-5 card-hover relative overflow-hidden"
-              style={{
-                background: "rgba(255,255,255,0.02)",
-                border: `1px solid ${color}20`,
-                boxShadow: `0 0 20px ${color}08`,
-              }}
-            >
-              {/* Top accent line */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, rgba(79,195,247,0.3), transparent)" }} />
+            <h3 className="text-xs font-bold tracking-widest uppercase" style={{ color: "#4fc3f7" }}>
+              Hunter Stats
+            </h3>
+            <div className="h-px flex-1" style={{ background: "linear-gradient(270deg, rgba(79,195,247,0.3), transparent)" }} />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {STAT_CARDS(statsMap).map(({ label, value, sub, color }) => (
               <div
-                className="absolute top-0 left-4 right-4 h-px"
-                style={{ background: `linear-gradient(90deg, transparent, ${color}80, transparent)` }}
-              />
-              <div
-                className="text-3xl font-display font-black mb-1"
-                style={{ color, textShadow: `0 0 20px ${color}60` }}
+                key={label}
+                className="rounded-xl p-5 card-hover relative overflow-hidden"
+                style={{
+                  background: "rgba(255,255,255,0.02)",
+                  border: `1px solid ${color}20`,
+                  boxShadow: `0 0 20px ${color}08`,
+                }}
               >
-                {value}
+                <div
+                  className="absolute top-0 left-4 right-4 h-px"
+                  style={{ background: `linear-gradient(90deg, transparent, ${color}80, transparent)` }}
+                />
+                <div
+                  className="text-3xl font-display font-black mb-1"
+                  style={{ color, textShadow: `0 0 20px ${color}60` }}
+                >
+                  {value}
+                </div>
+                <div className="text-sm text-slate-400 font-semibold">{label}</div>
+                {sub && <div className="text-xs mt-1" style={{ color: `${color}70` }}>{sub}</div>}
               </div>
-              <div className="text-sm text-slate-400 font-semibold">{label}</div>
-              {sub && <div className="text-xs mt-1" style={{ color: `${color}70` }}>{sub}</div>}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* ── Activity log ── */}
+        {/* ── Recent Activity ── */}
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, rgba(79,195,247,0.3), transparent)" }} />
@@ -418,36 +376,25 @@ export default async function DashboardPage() {
           </div>
           {user.xpEvents.length === 0 ? (
             <div
-              className="rounded-xl p-12 text-center space-y-4"
+              className="rounded-xl p-10 text-center"
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
             >
-              <div className="text-5xl">🌀</div>
-              <div>
-                <p className="font-display font-bold text-lg text-white mb-1">No activity yet, Hunter.</p>
-                <p className="text-slate-400 text-sm">Hit <span className="text-[#4fc3f7] font-semibold">Sync XP</span> to pull your latest GitHub commits, PRs, and issues.</p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-2 pt-2">
-                {[["Commit", "+15", "#4fc3f7"], ["PR", "+80", "#7c4dff"], ["Issue", "+30", "#4ade80"], ["Active Day", "+25", "#ffd54f"]].map(([label, xp, color]) => (
-                  <span key={label} className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: `${color}15`, border: `1px solid ${color}40`, color }}>
-                    {label} <span style={{ opacity: 0.7 }}>{xp} XP</span>
-                  </span>
-                ))}
-              </div>
+              <p className="text-slate-400 text-sm">No activity synced yet.</p>
             </div>
           ) : (
             <div
               className="rounded-xl overflow-hidden"
               style={{ border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 0 40px rgba(0,0,0,0.4)" }}
             >
-              {user.xpEvents.slice(0, 20).map((event, i, arr) => {
-                const es = EVENT_STYLES[event.eventType];
+              {user.xpEvents.map((event, i) => {
+                const es = EVENT_STYLES[event.eventType as XPEventType];
                 return (
                   <div
                     key={event.id}
                     className="activity-row flex items-center justify-between px-5 py-3 text-sm"
                     style={{
                       background: i % 2 === 0 ? "rgba(255,255,255,0.018)" : "rgba(0,0,0,0.2)",
-                      borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                      borderBottom: i < user.xpEvents.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                       borderLeft: `3px solid ${es.color}60`,
                     }}
                   >
@@ -482,71 +429,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* ── Achievements ── */}
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, rgba(255,213,79,0.3), transparent)" }} />
-            <h3 className="text-xs font-bold tracking-widest uppercase" style={{ color: "#ffd54f" }}>
-              Achievements
-            </h3>
-            <div className="h-px flex-1" style={{ background: "linear-gradient(270deg, rgba(255,213,79,0.3), transparent)" }} />
-          </div>
-
-          {unlockedCount === 0 ? (
-            <div
-              className="rounded-xl p-8 text-center"
-              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
-            >
-              <p className="text-slate-400 text-sm">No achievements yet — sync your XP to unlock them.</p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
-                {user.achievements.map((a) => {
-                  const def = ACHIEVEMENT_MAP[a.achievementKey];
-                  if (!def) return null;
-                  const rs = RARITY_STYLES[def.rarity];
-                  return (
-                    <div
-                      key={a.achievementKey}
-                      className="rounded-xl p-4 relative overflow-hidden card-hover"
-                      style={{
-                        background: rs.bg,
-                        border: `1px solid ${rs.border}`,
-                        boxShadow: `0 0 16px ${rs.glow}`,
-                      }}
-                    >
-                      {/* Top accent line */}
-                      <div
-                        className="absolute top-0 left-4 right-4 h-px"
-                        style={{ background: `linear-gradient(90deg, transparent, ${rs.color}80, transparent)` }}
-                      />
-                      <div className="text-2xl mb-2">{def.icon}</div>
-                      <div
-                        className="text-sm font-display font-bold leading-tight mb-1"
-                        style={{ color: rs.color, textShadow: `0 0 10px ${rs.glow}` }}
-                      >
-                        {def.name}
-                      </div>
-                      <div className="text-xs text-slate-500">{def.description}</div>
-                      <div
-                        className="mt-2 text-xs font-bold uppercase tracking-wider"
-                        style={{ color: rs.color, opacity: 0.6 }}
-                      >
-                        {def.rarity}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {lockedCount > 0 && (
-                <p className="text-xs text-slate-600 text-center">
-                  + {lockedCount} more locked achievement{lockedCount !== 1 ? "s" : ""}
-                </p>
-              )}
-            </>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -554,24 +436,6 @@ export default async function DashboardPage() {
 
 // ── constants & helpers ───────────────────────────────────────────────────────
 
-const RARITY_STYLES: Record<AchievementRarity, { bg: string; border: string; color: string; glow: string }> = {
-  common:    { bg: "rgba(100,116,139,0.08)", border: "rgba(100,116,139,0.25)", color: "#94a3b8", glow: "rgba(100,116,139,0.15)" },
-  rare:      { bg: "rgba(79,195,247,0.07)",  border: "rgba(79,195,247,0.25)",  color: "#4fc3f7", glow: "rgba(79,195,247,0.20)"  },
-  epic:      { bg: "rgba(124,77,255,0.10)",  border: "rgba(124,77,255,0.30)",  color: "#7c4dff", glow: "rgba(124,77,255,0.25)"  },
-  legendary: { bg: "rgba(255,213,79,0.08)",  border: "rgba(255,213,79,0.30)",  color: "#ffd54f", glow: "rgba(255,213,79,0.25)"  },
-};
-
-const OWNER_USERNAME = "Ervszzz";
-
-const OWNER_STYLE = {
-  label: "⚔ The Architect",
-  color: "#ff4444",
-  glow: "rgba(255,68,68,0.5)",
-  bg: "rgba(255,68,68,0.08)",
-  border: "rgba(255,68,68,0.45)",
-};
-
-// Per-tier prestige styling — each tier has a distinct color identity
 const PRESTIGE_STYLES: Record<number, { color: string; glow: string; bg: string; border: string; label: string }> = {
   1: { color: "#fbbf24", glow: "rgba(251,191,36,0.4)",  bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.5)",  label: "★" },
   2: { color: "#a78bfa", glow: "rgba(167,139,250,0.4)", bg: "rgba(124,77,255,0.12)", border: "rgba(124,77,255,0.5)",  label: "◆" },
@@ -581,27 +445,6 @@ const PRESTIGE_STYLES: Record<number, { color: string; glow: string; bg: string;
 function getPrestigeStyle(tier: number) {
   return PRESTIGE_STYLES[Math.min(tier, 4)] ?? PRESTIGE_STYLES[4];
 }
-
-const RANK_STYLES: Record<Rank, { bg: string; border: string; color: string }> = {
-  E: { bg: "rgba(30,41,59,0.6)", border: "#94a3b8", color: "#94a3b8" },
-  D: { bg: "rgba(5,46,22,0.6)", border: "#4ade80", color: "#4ade80" },
-  C: { bg: "rgba(12,26,46,0.6)", border: "#4fc3f7", color: "#4fc3f7" },
-  B: { bg: "rgba(26,9,56,0.6)", border: "#7c4dff", color: "#7c4dff" },
-  A: { bg: "rgba(31,21,0,0.6)", border: "#ffd54f", color: "#ffd54f" },
-  S: { bg: "rgba(31,0,0,0.6)", border: "#ef4444", color: "#ef4444" },
-  NATIONAL: { bg: "rgba(26,10,0,0.6)", border: "#ff9800", color: "#ff9800" },
-};
-
-const EVENT_STYLES: Record<XPEventType, { label: string; color: string }> = {
-  COMMIT: { label: "Commit", color: "#4fc3f7" },
-  PULL_REQUEST: { label: "PR", color: "#7c4dff" },
-  ISSUE: { label: "Issue", color: "#4ade80" },
-  ACTIVE_DAY: { label: "Active Day", color: "#ffd54f" },
-  STAR_EARNED: { label: "Star", color: "#ffd54f" },
-  REPO_CREATED: { label: "New Repo", color: "#7c4dff" },
-  FOLLOWER_GAINED: { label: "Follower", color: "#4ade80" },
-  FORK_EARNED: { label: "Fork", color: "#4fc3f7" },
-};
 
 function STAT_CARDS(stats: Record<string, { count: number; xp: number }>) {
   return [

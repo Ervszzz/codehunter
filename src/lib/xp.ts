@@ -84,6 +84,70 @@ export function getPrestigeTitle(prestigeTier: number): string | null {
   return PRESTIGE_TITLES[prestigeTier - 1] ?? PRESTIGE_TITLES[PRESTIGE_TITLES.length - 1];
 }
 
+/**
+ * Given an array of dates on which the user had an ACTIVE_DAY event,
+ * returns the current consecutive-day streak ending today (or yesterday
+ * if the user already coded today — streaks count full calendar days).
+ *
+ * The array does NOT need to be pre-sorted; the function sorts internally.
+ */
+export function calcStreak(activeDays: Date[]): number {
+  if (activeDays.length === 0) return 0;
+
+  // Normalise to UTC date strings "YYYY-MM-DD" and deduplicate
+  const daySet = new Set(activeDays.map((d) => d.toISOString().slice(0, 10)));
+  const days = Array.from(daySet).sort().reverse(); // most-recent first
+
+  // "Today" in UTC
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Streak must start from today or yesterday (we allow today to count)
+  if (days[0] !== todayStr) {
+    // Check if the most recent day was yesterday
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    if (days[0] !== yesterday) return 0;
+  }
+
+  let streak = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]);
+    const curr = new Date(days[i]);
+    const diffDays = Math.round((prev.getTime() - curr.getTime()) / 86_400_000);
+    if (diffDays === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+/**
+ * Returns the all-time longest consecutive-day streak from the activity history.
+ */
+export function calcLongestStreak(activeDays: Date[]): number {
+  if (activeDays.length === 0) return 0;
+
+  const daySet = new Set(activeDays.map((d) => d.toISOString().slice(0, 10)));
+  const days = Array.from(daySet).sort(); // oldest first
+
+  let longest = 1;
+  let current = 1;
+
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]);
+    const curr = new Date(days[i]);
+    const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86_400_000);
+    if (diffDays === 1) {
+      current++;
+      if (current > longest) longest = current;
+    } else {
+      current = 1;
+    }
+  }
+  return longest;
+}
+
 export function xpToNextRank(totalXP: number): { rank: Rank; needed: number; progress: number } | null {
   const ranks: Rank[] = ["E", "D", "C", "B", "A", "S", "NATIONAL"];
   const currentRank = calcRank(totalXP);

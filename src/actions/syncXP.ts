@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicEvents, getUserProfile, getUserRepos } from "@/lib/github";
 import { XP_VALUES, XPEventType, calcLevel, calcRank, getPrestigeMultiplier, getPrestigeTitle } from "@/lib/xp";
 import { auth } from "@/lib/auth";
+import { checkAndAwardAchievements } from "@/lib/checkAchievements";
 
 interface SyncResult {
   success: boolean;
@@ -149,6 +150,9 @@ export async function syncUserXP(userId?: string): Promise<SyncResult> {
         avatarUrl: profile.avatar_url,
       },
     });
+
+    // Check and award any newly unlocked achievements
+    await checkAndAwardAchievements(targetId);
 
     return { success: true, xpGained, newLevel, newRank };
   } catch (err) {
