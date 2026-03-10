@@ -157,11 +157,14 @@ export default async function LeaderboardPage() {
               const rankStyle = RANK_STYLES[hunter.rank as Rank];
               const posStyle = POSITION_STYLES[pos];
               const isCurrentUser = hunter.id === currentUserId;
+              const isOwner = hunter.username === OWNER_USERNAME;
               const isTop3 = pos <= 3;
 
-              // Row background: top3 tint → current user highlight → alternating
+              // Row background
               let rowBg: string;
-              if (isCurrentUser) {
+              if (isOwner) {
+                rowBg = "rgba(255,68,68,0.06)";
+              } else if (isCurrentUser) {
                 rowBg = `${rankStyle.border}12`;
               } else if (isTop3 && pos === 1) {
                 rowBg = "rgba(255,213,79,0.04)";
@@ -180,19 +183,22 @@ export default async function LeaderboardPage() {
                   style={{
                     background: rowBg,
                     borderBottom: i < hunters.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                    borderLeft: isCurrentUser
+                    borderLeft: isOwner
+                      ? "3px solid #ff4444"
+                      : isCurrentUser
                       ? `3px solid ${rankStyle.border}`
                       : isTop3
                       ? `3px solid ${posStyle?.color ?? "transparent"}60`
                       : "3px solid transparent",
+                    boxShadow: isOwner ? "inset 0 0 40px rgba(255,68,68,0.04)" : undefined,
                   }}
                 >
                   {/* Position number */}
                   <div
                     className="flex-shrink-0 w-10 text-center font-display font-black text-sm"
                     style={{
-                      color: posStyle?.color ?? "rgba(148,163,184,0.4)",
-                      textShadow: posStyle ? `0 0 12px ${posStyle.glow}` : undefined,
+                      color: isOwner ? "#ff4444" : posStyle?.color ?? "rgba(148,163,184,0.4)",
+                      textShadow: isOwner ? "0 0 12px rgba(255,68,68,0.7)" : posStyle ? `0 0 12px ${posStyle.glow}` : undefined,
                     }}
                   >
                     {posStyle ? posStyle.label : `#${pos}`}
@@ -203,8 +209,12 @@ export default async function LeaderboardPage() {
                     <div
                       className="rounded-full p-px"
                       style={{
-                        background: `linear-gradient(135deg, ${rankStyle.border}cc, ${rankStyle.border}40)`,
-                        boxShadow: `0 0 8px ${rankStyle.border}40`,
+                        background: isOwner
+                          ? "linear-gradient(135deg, #ff4444cc, #ff000040)"
+                          : `linear-gradient(135deg, ${rankStyle.border}cc, ${rankStyle.border}40)`,
+                        boxShadow: isOwner
+                          ? "0 0 16px rgba(255,68,68,0.5), 0 0 32px rgba(255,68,68,0.2)"
+                          : `0 0 8px ${rankStyle.border}40`,
                       }}
                     >
                       {hunter.avatarUrl ? (
@@ -230,12 +240,32 @@ export default async function LeaderboardPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <Link
                         href={`/hunter/${hunter.username}`}
-                        className="font-bold text-white text-sm hover:underline truncate"
-                        style={{ textShadow: isTop3 ? `0 0 16px ${posStyle?.glow}` : undefined }}
+                        className="font-bold text-sm hover:underline truncate"
+                        style={{
+                          color: isOwner ? "#ff6666" : "white",
+                          textShadow: isOwner
+                            ? "0 0 20px rgba(255,68,68,0.8)"
+                            : isTop3
+                            ? `0 0 16px ${posStyle?.glow}`
+                            : undefined,
+                        }}
                       >
                         {hunter.name ?? hunter.username}
                       </Link>
-                      {isCurrentUser && (
+                      {isOwner && (
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full font-display font-bold tracking-wider"
+                          style={{
+                            background: "rgba(255,68,68,0.15)",
+                            border: "1px solid rgba(255,68,68,0.5)",
+                            color: "#ff4444",
+                            boxShadow: "0 0 8px rgba(255,68,68,0.3)",
+                          }}
+                        >
+                          ⚔ The Architect
+                        </span>
+                      )}
+                      {isCurrentUser && !isOwner && (
                         <span
                           className="text-xs px-2 py-0.5 rounded-full font-bold"
                           style={{
@@ -264,10 +294,10 @@ export default async function LeaderboardPage() {
                     <span
                       className="text-xs font-display font-bold px-2.5 py-1 rounded-full"
                       style={{
-                        background: rankStyle.bg,
-                        border: `1px solid ${rankStyle.border}50`,
-                        color: rankStyle.color,
-                        boxShadow: `0 0 10px ${rankStyle.border}20`,
+                        background: isOwner ? "rgba(255,68,68,0.12)" : rankStyle.bg,
+                        border: isOwner ? "1px solid rgba(255,68,68,0.4)" : `1px solid ${rankStyle.border}50`,
+                        color: isOwner ? "#ff4444" : rankStyle.color,
+                        boxShadow: isOwner ? "0 0 10px rgba(255,68,68,0.25)" : `0 0 10px ${rankStyle.border}20`,
                       }}
                     >
                       {hunter.rank}
@@ -285,8 +315,12 @@ export default async function LeaderboardPage() {
                     <div
                       className="font-display font-black text-base"
                       style={{
-                        color: rankStyle.color,
-                        textShadow: isTop3 ? `0 0 20px ${rankStyle.border}70` : undefined,
+                        color: isOwner ? "#ff4444" : rankStyle.color,
+                        textShadow: isOwner
+                          ? "0 0 20px rgba(255,68,68,0.8)"
+                          : isTop3
+                          ? `0 0 20px ${rankStyle.border}70`
+                          : undefined,
                       }}
                     >
                       {hunter.totalXP.toLocaleString()}
@@ -309,6 +343,8 @@ export default async function LeaderboardPage() {
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
+
+const OWNER_USERNAME = "Ervszzz";
 
 const PRESTIGE_COLORS: Record<number, string> = {
   1: "#fbbf24",
